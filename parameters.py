@@ -1,0 +1,10 @@
+from pygame.math import Vector3 as V3
+
+CAMPOS = V3()
+GROUND = -20
+INITIAL_GROUND = -20
+YFLIGHT = 12
+
+VISIBILITY = 1000
+
+N_DESTROY = 20
