@@ -1,10 +1,17 @@
 from pygame.math import Vector3 as V3
 
+W,H = 800,600
+FPS = 40
 CAMPOS = V3()
 GROUND = -20
-INITIAL_GROUND = -20
+INITIAL_GROUND = GROUND
 YFLIGHT = 12
-
-VISIBILITY = 1000
-
+VISIBILITY = 1000#not used
 N_DESTROY = 20
+SPEED = 1#to be deleted
+HERO_POS = V3(0,GROUND+YFLIGHT,20)
+
+def refresh():
+    global hero_POS, INITIAL_GROUND
+    INITIAL_GROUND = GROUND
+    HERO_POS = V3(0,GROUND+YFLIGHT,20)

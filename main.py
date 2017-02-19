@@ -1,7 +1,5 @@
-from pygame.math import Vector2 as V2
 from pygame.math import Vector3 as V3
 import pygame
-
 
 import thorpy
 ##from stlreader import Object3D #core3d vs stlreader ==> core un CHOUILLA mieux
@@ -14,8 +12,9 @@ import drawing
 import vessel
 import random
 from track import Track
+from scene import Scene
+from race import Race
 
-FPS = 40
 # ##############################################################################
 #parts:
     #wings
@@ -54,148 +53,88 @@ FPS = 40
 #FIGNOLING:
 #si collision, alors regarde quelle partie du vaisseau, puis l'enleve et dessine les parties subdivisees qui volent en eclats
 
-objs = []
-
-light_pos = V3(0,1000,-1000)
-light_m = V3(20,20,20)
-light_M = V3(200,200,200)
-light = Light(light_pos, light_m, light_M)
-
-fighter_color = V3(70,70,255)
-wings = primitivemeshes.rectangle(5,2,fighter_color)
-fighter = Object3D("meshes/f5.stl",more_triangles=wings.triangles)
-for t in fighter.triangles:
-    t.color = fighter_color
-    t.ecolor = t.color
-fighter.rotate_around_center_x(-90)
-fighter.compute_box()
-##fighter = fighter.get_splitted_copy(threshold=-2.5)
-objs.append(fighter)
 
 
+def init_scene(scene): #debugging only
+    objs = []
+    parameters.refresh()
+    #
+    light_pos = V3(0,1000,-1000)
+    light_m = V3(20,20,20)
+    light_M = V3(200,200,200)
+    light = Light(light_pos, light_m, light_M)
+    scene.light = light
+    #hero
+    hero_color = V3(70,70,255)
+    wings = primitivemeshes.rectangle(5,2,hero_color)
+    hero = vessel.Vessel("f5.stl",more_triangles=wings.triangles)
+    for t in hero.triangles:
+        t.color = hero_color
+        t.ecolor = t.color
+    hero.rotate_around_center_x(-90)
+    hero.compute_box()
+    ##hero = hero.get_splitted_copy(threshold=-2.5)
+    hero.dyn = vessel.Dynamics(3., 0.1, 1., 0.1)
+    scene.hero = hero
+    objs.append(hero)
+    #track
+    def get_thing(zpos, track):
+        thing1 = primitivemeshes.triangle(2,(0,0,255))
+        thing1.move(V3(track.x1,track.y,zpos))
+        thing2 = primitivemeshes.triangle(2,(0,0,255))
+        thing2.move(V3(track.x2,track.y,zpos))
+        thing3 = primitivemeshes.p_line((track.x1,track.y,zpos),
+                                        (track.x2,track.y,zpos), (0,0,255))
+        return thing1, thing2, thing3
+    track = Track(-40,40)
+    left,right,middle = get_thing(0, track)
+    track.add_thing(left, frompos=0, topos=1400, spacing=50, maxn=None)
+    track.add_thing(right, 0, 1400, 50, None)
+    track.add_thing(middle, 0, 1400, 50, None)
+    scene.track = track
+    #obstacles
+    obstacle = primitivemeshes.cube(20, (255,0,0))
+    obstacle.set_pos(V3(0,track.y+10,200))
+    track.add_obstacle(obstacle)
+    obstacle.compute_box()
+    poly = primitivemeshes.p_disk(10.,filled=False,n=20)
+    poly.move(V3(0,parameters.GROUND+parameters.YFLIGHT,250))
+    objs.append(poly)
+    #
+    scene.opponents = [hero.get_copy() for i in range(2)]
+    random.seed(3)
+    for o in scene.opponents:
+        o.move(V3(random.randint(-2,2)*10,random.randint(-2,2)*10, random.randint(4,6)*10))
+        o.set_color(random.choice(drawing.colors))
+    objs += scene.opponents
+    scene.objs = objs
+    scene.cam = Camera(scene.screen, fov=512, d=2, objs=objs+track.get_all_objs())
+    scene.objs += track.get_nonthings()
 
 
-def get_thing(zpos, track):
-    thing1 = primitivemeshes.triangle(2,(0,0,255))
-    thing1.move(V3(track.x1,track.y,zpos))
-    thing2 = primitivemeshes.triangle(2,(0,0,255))
-    thing2.move(V3(track.x2,track.y,zpos))
-    thing3 = primitivemeshes.p_line((track.x1,track.y,zpos),
-                                    (track.x2,track.y,zpos), (0,0,255))
-    return thing1, thing2, thing3
+if __name__ == "__main__":
+    app = thorpy.Application((parameters.W,parameters.H))
+    screen = thorpy.get_screen()
 
-track = Track(-40,40)
-left,right,middle = get_thing(0, track)
-##track.add_thing(left, frompos=600, topos=1400, spacing=50, maxn=50)
-##track.add_thing(right, 0, 800, 50, 4)
-##track.add_thing(middle, 0, 1400, 50, 4)
-track.add_thing(left, frompos=0, topos=1400, spacing=50, maxn=None)
-track.add_thing(right, 0, 1400, 50, None)
-track.add_thing(middle, 0, 1400, 50, None)
+    ##cam.move(V3(0,20,0))
 
-obstacle = primitivemeshes.cube(20, (255,0,0))
-obstacle.set_pos(V3(0,track.y+10,200))
-track.add_obstacle(obstacle)
-obstacle.compute_box()
-##print("cube points", obstacle.get_vertices())
-##print("cube box", obstacle.box.points)
+    g = thorpy.Ghost.make()
 
 
-
-##poly = primitivemeshes.p_triangle(10.)
-poly = primitivemeshes.p_disk(10.,filled=False,n=20)
-##poly = primitivemeshes.p_arrow_line(20,100,20)
-poly.move(V3(0,parameters.GROUND+parameters.YFLIGHT,250))
-##poly.filled = True
-objs.append(poly)
-
-# ##############################################################################
-FIGHTER_POS = V3(0,parameters.GROUND+parameters.YFLIGHT,20)
-things_passed = 0
-
-##opponent = fighter.get_copy()
-##opponent.move(V3(-10,0,40))
-opponents = [fighter.get_copy() for i in range(2)]
-random.seed(3)
-for o in opponents:
-    o.move(V3(random.randint(-2,2)*10,random.randint(-2,2)*10, random.randint(4,6)*10))
-    o.set_color(random.choice(drawing.colors))
-objs += opponents
-
-def refresh_screen():
-    global things_passed
-    fighter.set_pos(FIGHTER_POS)
-##    poly.rotate_around_center_y(1)
-    for o in opponents:
-        o.move(V3(0,0,SPEED))
-    objs.sort(key=lambda x:x.from_center.length(), reverse=True)
-    screen.fill((255,255,255))
-    screen.fill((0,255,0),thorpy.get_screen().get_rect().move((0,H//2)))
-    track.refresh_and_draw_things(cam, light)
-    for obj in objs: #pas boucler sur objs mais sur tous les triangles de la scen!!! ==> class scene, le concept de obj est la que pour user transfos ?
-        if obj.visible:
-            obj.refresh_and_draw(cam, light)
-    for obs in track.get_nonthings():
-        if obs.collide(fighter) or fighter.collide(obs):
-            print("collision")
-    pygame.display.flip()
+    ##thorpy.application.SHOW_FPS = True
+    race = Race()
+    scene = Scene(race)
+    race.init_scene(scene)
+    reac = thorpy.ConstantReaction(thorpy.THORPY_EVENT,scene.func_time,
+                                    {"id":thorpy.constants.EVENT_TIME})
+    g.add_reaction(reac)
 
 
-SPEED = 1
-def func_time():
-    active_obj.move(V3(0,0,SPEED))
-    refresh_screen()
-    dyn.refresh()
-    if cam.from_init.y < parameters.INITIAL_GROUND + parameters.YFLIGHT:
-        if dyn.velocity.y < 0:
-            dyn.velocity.y = 0
-    active_obj.move(dyn.velocity)
-##    parameters.CAMPOS += dyn.velocity
-    parameters.GROUND += dyn.velocity.y
-    press = pygame.key.get_pressed()
-    if press[pygame.K_RIGHT]:
-        dyn.h.restart(1.)
-    elif press[pygame.K_LEFT]:
-        dyn.h.restart(-1.)
-    elif press[pygame.K_DOWN]:
-        dyn.v.restart(-1.)
-    elif press[pygame.K_UP]:
-        dyn.v.restart(1.)
-    elif press[pygame.K_SPACE]:
-        fighter.rotate_around_center_z(DA)
+    thorpy.functions.playing(30,1000//parameters.FPS)
+    m = thorpy.Menu(g,fps=parameters.FPS)
+    m.play()
 
-
-
-
-
-##thorpy.application.SHOW_FPS = True
-
-
-reac = thorpy.ConstantReaction(thorpy.THORPY_EVENT,func_time,
-                                {"id":thorpy.constants.EVENT_TIME})
-
-W,H = 800,600
-app = thorpy.Application((W,H))
-screen = thorpy.get_screen()
-
-cam = Camera(screen, fov=512, d=2, objs=objs+track.get_all_objs())
-objs += track.get_nonthings()
-##cam.move(V3(0,20,0))
-
-dyn = vessel.Dynamics(3., 0.1, 1., 0.1)
-
-active_obj = cam
-
-g = thorpy.Ghost.make()
-g.add_reaction(reac)
-
-##thorpy.application.SHOW_FPS = True
-
-thorpy.functions.playing(30,1000//FPS)
-m = thorpy.Menu(g,fps=FPS)
-m.play()
-
-app.quit()
+    app.quit()
 
 
 

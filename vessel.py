@@ -1,4 +1,5 @@
 from pygame.math import Vector3 as V3
+import core3d
 
 ##class Move:
 ##
@@ -106,3 +107,13 @@ class Dynamics:
         self.velocity.y = self.v.refresh()
 
 
+class Vessel(core3d.Object3D):
+
+    def __init__(self, filename, more_triangles=None):
+        core3d.Object3D.__init__(self,filename, more_triangles)
+        self.dynamics = None
+        self.rail = None
+
+    def rail_collision_control(self):
+        if int(self.from_center.z) in self.rail.obstacles_pos:
+            print("collision")

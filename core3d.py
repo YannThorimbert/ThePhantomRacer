@@ -1,4 +1,3 @@
-from pygame.math import Vector2 as V2
 from pygame.math import Vector3 as V3
 import math
 import random
