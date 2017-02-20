@@ -2,6 +2,9 @@ from pygame.math import Vector3 as V3
 
 W,H = 800,600
 FPS = 40
+
+MOVE_DELTA_I = 5
+
 CAMPOS = V3()
 GROUND = -20
 INITIAL_GROUND = GROUND

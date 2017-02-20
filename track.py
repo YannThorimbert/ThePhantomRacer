@@ -1,4 +1,5 @@
 from pygame.math import Vector3 as V3
+import thorpy
 import primitivemeshes
 from core3d import Path3D, Object3D, ManualObject3D
 import parameters
@@ -8,6 +9,26 @@ def get_type(thing):
         return "o"
     else:
         return "p"
+
+class Rail:
+
+    def __init__(self, track, x, y):
+        self.track = track
+        self.x = x
+        self.y = y
+        self.obstacles_pos = set()
+        self.obstacles = []
+        self.pos = V3(x*track.railw,y*track.railh,0)
+
+    def get_pos(self,z):
+        pos = V3(self.pos)
+        pos.z = z
+        return pos
+
+    def append_obstacle(self, obs):
+        assert obs.from_center.z == int(obs.from_center.z)
+        self.obstacles.append(obs)
+        self.obstacles_pos.add(obs.from_center.z)
 
 class ThingManager:
 
@@ -28,9 +49,9 @@ class ThingManager:
         remaining = self.n - self.counter
         return remaining > self.maxn
 
-class Track:
+class Track: #store end
 
-    def __init__(self, x1, x2, y=None):
+    def __init__(self, railw, railh, y=None, nx=3, ny=1):
         self.things_objects = []
         self.things_paths = []
         self.obstacles_objects = []
@@ -39,10 +60,25 @@ class Track:
         self.y = y
         if self.y is None:
             self.y = parameters.GROUND + 1
-        self.x1 = x1
-        self.x2 = x2
+        self.x1 = 0
+        self.x2 = railw*nx
+        #
+        self.nx, self.ny = nx, ny
+        self.railw, self.railh = railw, railh
+        self.rails = thorpy.gamestools.basegrid.BaseGrid(nx,ny)
+        for x,y in self.rails:
+            self.rails[x,y] = Rail(self,x,y)
 
-    def add_thing(self, thing, frompos, topos, spacing, maxn):
+    def add_visual_rails(self,color=(0,0,0)):
+        for x in range(self.nx+1):
+            xrail = x*self.railw
+##            print("adding",x,xrail)
+            path = Path3D([V3(xrail,self.y,0),V3(xrail,self.y,50)],False,color)
+            self.add_thing(path,200,800,100)
+
+
+
+    def add_thing(self, thing, frompos, topos, spacing, maxn=None):
         n = (topos-frompos)//spacing
         if maxn is None:
             maxn = n
@@ -58,12 +94,21 @@ class Track:
             else:
                 self.things_objects.append(cpy)
 
-    def add_obstacle(self, obstacle):
+    def add_thing_on_rail(self, x, y, thing, frompos, topos, spacing, maxn=None):
+        thing.set_pos(self.rails[x][y].get_pos(0))
+        self.add_thing(thing, frompos, topos, spacing, maxn)
+
+    def add_obstacle(self, obstacle, rail_x, rail_y, z, center=False):
+##        obstacle.set_pos(self.rails[rail_x,rail_y].get_pos(z))
+        obstacle.move(self.rails[rail_x,rail_y].get_pos(z))
+        if center:
+            obstacle.move(V3(self.railw//2,0,0))
         type_ = get_type(obstacle)
         if type_ == "p":
             self.obstacles_paths.append(obstacle)
         else:
             self.obstacles_objects.append(obstacle)
+        self.rails[rail_x,rail_y].append_obstacle(obstacle)
 
 
     def get_all_objs(self):

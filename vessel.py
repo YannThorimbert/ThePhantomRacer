@@ -1,5 +1,5 @@
 from pygame.math import Vector3 as V3
-import core3d
+import core3d, parameters
 
 ##class Move:
 ##
@@ -56,50 +56,84 @@ import core3d
 ##        self.up.refresh(self.cam)
 ##        self.down.refresh(self.cam)
 
+##class Move:
+##
+##    def __init__(self, amount, attenuation):
+##        self.original_amount = amount
+##        self.a = None
+##        self.k = attenuation
+##        self.i = 0
+##
+##    def restart(self, sign):
+##        self.a = sign * self.original_amount
+##        self.i = 1
+##
+##    def stop(self):
+##        self.i = 0
+##
+##    def refresh(self): #linear
+##        if self.i > 0:
+##            minus = self.i*self.k*self.a
+##            if abs(minus) <= abs(self.a): #au lieu de ca on peut precalculer le i auquel ca arrive
+##                self.i += 1
+##                return self.a - minus
+##            else:
+##                self.stop()
+##        return 0.
+##
+####    def refresh(self): #exponential
+####        if self.i > 0:
+####            self.a *= self.k
+####            print("b", self.a)
+####            if abs(self.a) < 0.1:
+####                self.stop()
+####            else:
+####                return self.a
+####        return 0.
+
 class Move:
 
-    def __init__(self, amount, attenuation):
-        self.original_amount = amount
-        self.a = None
-        self.k = attenuation
-        self.i = 0
+    def __init__(self, vel, fighter):
+        self.vel = vel
+        self.fighter = fighter
+        self.dest = None #x coordinate
+        self.last_pressed = 0
 
-    def restart(self, sign):
-        self.a = sign * self.original_amount
-        self.i = 1
+    def go_to(self, dest, i):
+##        print("goto", i, self.last_pressed + parameters.MOVE_DELTA_I)
+        if i > self.last_pressed + parameters.MOVE_DELTA_I:
+##            print("setting dest")
+            self.dest = dest
+            self.last_pressed = i
+            return True
+        return False
 
-    def stop(self):
-        self.i = 0
-
-    def refresh(self): #linear
-        if self.i > 0:
-            minus = self.i*self.k*self.a
-            if abs(minus) <= abs(self.a): #au lieu de ca on peut precalculer le i auquel ca arrive
-                self.i += 1
-                return self.a - minus
-            else:
-                self.stop()
+    def refresh(self):
+        if self.dest is not None:
+            delta = self.dest - parameters.CAMPOS.x
+##            print("r        ",delta, self.dest, parameters.CAMPOS.x)
+            abs_delta = abs(delta)
+            if abs_delta < 2:
+                self.dest = None
+                return 0.
+            if abs_delta > self.vel:
+                return self.vel * delta/abs_delta
+            return delta
         return 0.
 
-##    def refresh(self): #exponential
-##        if self.i > 0:
-##            self.a *= self.k
-##            print("b", self.a)
-##            if abs(self.a) < 0.1:
-##                self.stop()
-##            else:
-##                return self.a
-##        return 0.
 
+#nouvelle politique:
+#   quand user appuie sur une touche, on entame la transition vers autre rail,
+#   jusqu'a ce que l'autre rail soit atteint, sauf si user appuie sur une touche,
+#   auquel cas la destination est incrementee
+#       ==> attributs: dest, vel
+#   Eventuellement: smoothing des derniers steps.
 
 class Dynamics:
 
-    def __init__(self, ha, hk, va, vk):
-        self.h = Move(ha, hk) #linear
-        self.v = Move(va, vk)
-##        self.h = Move(6., 0.6) #exponential
-##        self.v = Move(6., 0.6)
-        #
+    def __init__(self, xvel, yvel, fighter):
+        self.h = Move(xvel, fighter)
+        self.v = Move(yvel, fighter)
         self.velocity = V3()
 
     def refresh(self):
@@ -112,8 +146,10 @@ class Vessel(core3d.Object3D):
     def __init__(self, filename, more_triangles=None):
         core3d.Object3D.__init__(self,filename, more_triangles)
         self.dynamics = None
-        self.rail = None
+        self.railx = None
+        self.raily = None
 
     def rail_collision_control(self):
         if int(self.from_center.z) in self.rail.obstacles_pos:
             print("collision")
+

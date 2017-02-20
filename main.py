@@ -3,7 +3,7 @@ import pygame
 
 import thorpy
 ##from stlreader import Object3D #core3d vs stlreader ==> core un CHOUILLA mieux
-from core3d import Object3D, Path3D, Box
+from core3d import Object3D, Path3D
 from light import Light
 from camera import Camera
 import primitivemeshes
@@ -14,6 +14,15 @@ import random
 from track import Track
 from scene import Scene
 from race import Race
+#be careful:
+#   cam need to know all!!!!
+
+##OverflowError: signed short integer is greater than maximum
+#       ==> si continue, faire comme pour Object3D avec control des val abs
+
+#tordre vitesse plutot que ajouter. Preserver norme.
+#obstacles: tous les obstacles doivent passer par rails ! ==> pas de position par user
+
 
 # ##############################################################################
 #parts:
@@ -57,6 +66,8 @@ from race import Race
 
 def init_scene(scene): #debugging only
     objs = []
+    parameters.GROUND = parameters.INITIAL_GROUND
+    parameters.CAMPOS = V3()
     parameters.refresh()
     #
     light_pos = V3(0,1000,-1000)
@@ -72,31 +83,35 @@ def init_scene(scene): #debugging only
         t.color = hero_color
         t.ecolor = t.color
     hero.rotate_around_center_x(-90)
-    hero.compute_box()
+    hero.compute_box1D()
     ##hero = hero.get_splitted_copy(threshold=-2.5)
-    hero.dyn = vessel.Dynamics(3., 0.1, 1., 0.1)
+    hero.dyn = vessel.Dynamics(10,2,hero)
     scene.hero = hero
     objs.append(hero)
     #track
-    def get_thing(zpos, track):
-        thing1 = primitivemeshes.triangle(2,(0,0,255))
-        thing1.move(V3(track.x1,track.y,zpos))
-        thing2 = primitivemeshes.triangle(2,(0,0,255))
-        thing2.move(V3(track.x2,track.y,zpos))
-        thing3 = primitivemeshes.p_line((track.x1,track.y,zpos),
-                                        (track.x2,track.y,zpos), (0,0,255))
-        return thing1, thing2, thing3
-    track = Track(-40,40)
-    left,right,middle = get_thing(0, track)
-    track.add_thing(left, frompos=0, topos=1400, spacing=50, maxn=None)
-    track.add_thing(right, 0, 1400, 50, None)
-    track.add_thing(middle, 0, 1400, 50, None)
+    track = Track(60,60,nx=3)
+##    def get_thing(zpos, track):
+##        thing1 = primitivemeshes.triangle(2,(0,0,255))
+##        thing1.move(V3(track.x1,track.y,zpos))
+##        thing2 = primitivemeshes.triangle(2,(0,0,255))
+##        thing2.move(V3(track.x2,track.y,zpos))
+##        thing3 = primitivemeshes.p_line((track.x1,track.y,zpos),
+##                                        (track.x2,track.y,zpos), (0,0,255))
+##        return thing1, thing2, thing3
+##    left,right,middle = get_thing(0, track)
+##    track.add_thing(left, frompos=0, topos=1400, spacing=50, maxn=None)
+##    track.add_thing(right, 0, 1400, 50, None)
+##    track.add_thing(middle, 0, 1400, 50, None)
+    #
+    track.add_visual_rails()
     scene.track = track
     #obstacles
-    obstacle = primitivemeshes.cube(20, (255,0,0))
-    obstacle.set_pos(V3(0,track.y+10,200))
-    track.add_obstacle(obstacle)
-    obstacle.compute_box()
+    obstacle = primitivemeshes.cube(10, (255,0,0))
+##    obstacle.set_pos(V3(0,track.y,200))
+##    track.add_obstacle(obstacle,0,0,500)
+    track.add_obstacle(obstacle.get_copy(),1,0,500)
+    obstacle.compute_box1D()
+    #
     poly = primitivemeshes.p_disk(10.,filled=False,n=20)
     poly.move(V3(0,parameters.GROUND+parameters.YFLIGHT,250))
     objs.append(poly)
@@ -108,8 +123,10 @@ def init_scene(scene): #debugging only
         o.set_color(random.choice(drawing.colors))
     objs += scene.opponents
     scene.objs = objs
-    scene.cam = Camera(scene.screen, fov=512, d=2, objs=objs+track.get_all_objs())
+    scene.cam = Camera(scene.screen, fov=512, d=2, objs=None)
     scene.objs += track.get_nonthings()
+    scene.refresh_cam()
+    scene.put_hero_on_rail(0,0)
 
 
 if __name__ == "__main__":
@@ -128,7 +145,6 @@ if __name__ == "__main__":
     reac = thorpy.ConstantReaction(thorpy.THORPY_EVENT,scene.func_time,
                                     {"id":thorpy.constants.EVENT_TIME})
     g.add_reaction(reac)
-
 
     thorpy.functions.playing(30,1000//parameters.FPS)
     m = thorpy.Menu(g,fps=parameters.FPS)

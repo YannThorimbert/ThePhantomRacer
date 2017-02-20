@@ -14,9 +14,13 @@ def colorize(obj):
         t.color = colors[::2][i%6]
 
 def draw_aa(screen, p, color):
-    gfx.filled_trigon(screen,
-                        p[0][0], p[0][1], p[1][0], p[1][1], p[2][0], p[2][1],
-                        color)
+    try:
+        gfx.filled_trigon(screen,
+                            p[0][0], p[0][1], p[1][0], p[1][1], p[2][0], p[2][1],
+                            color)
+    except:
+        print("points", p[0][0], p[0][1], p[1][0], p[1][1], p[2][0], p[2][1])
+        print(color)
     gfx.aatrigon(screen,
                     p[0][0], p[0][1], p[1][0], p[1][1], p[2][0], p[2][1],
                     color)

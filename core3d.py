@@ -65,7 +65,30 @@ def get_hitbox_points(points):
                 maxs[i] = p[i]
     return [mins[0],maxs[0]], [mins[1],maxs[1]], [mins[2],maxs[2]]
 
-class Box: #nb: if vessels grossly remains in the same direction, do not need to recompute box
+def get_hitbox1D_points(points):
+    zlist = [p[2] for p in points]
+    return min(zlist), max(zlist)
+
+class Box1D: #z-limits of the object
+
+    def __init__(self, obj):
+        self.obj = obj
+        self.zmin, self.zmax = get_hitbox1D_points(obj.get_vertices())
+
+    def collide_point(self, z):
+        return self.zmin < z < self.zmax
+
+    def collide_box(self, b):
+        if self.collide_point(b.zmin):
+            return True
+        else:
+            return self.collide_point(b.zmax)
+
+    def move(self, delta):
+        self.zmin += delta
+        self.zmax += delta
+
+class Box3D: #nb: if vessels grossly remains in the same direction, do not need to recompute box
 
     def __init__(self, obj):
         self.obj = obj
@@ -255,15 +278,18 @@ class Path3D:
         self.filled = False
         self.box = None
 
-    def compute_box(self):
-        self.box = Box(self)
+    def compute_box3D(self):
+        self.box = Box3D(self)
+
+    def compute_box1D(self):
+        self.box = Box1D(self)
 
     def move(self, delta):
         for v in self.points:
             v += delta
         self.from_center += delta
         if self.box:
-            self.box.move(delta)
+            self.box.move(delta.z)
 
     def set_pos(self, pos):
         delta = pos - self.from_center
@@ -315,7 +341,7 @@ class Path3D:
     def refresh_and_draw(self, cam, light):
         p = []
         for t in self.points:
-            if t.z > 0 and t.y > parameters.GROUND and t.z < parameters.VISIBILITY:
+            if t.z > 1 and t.y > parameters.GROUND and t.z < parameters.VISIBILITY:
                 x,y = cam.project(t)
                 p.append((int(x),int(y)))
         if self.closed:
@@ -379,7 +405,7 @@ class Object3D(Path3D):
             v += delta
         self.from_center += delta
         if self.box:
-            self.box.move(delta)
+            self.box.move(delta.z)
 
     def rotate_x(self, angle, refresh=True):
         for v in self.vertices.values():
@@ -497,13 +523,17 @@ class Object3D(Path3D):
     def refresh_and_draw(self, cam, light):
         self.refresh()
         for t in self.triangles:
-            if t.c.z > 0 and t.c.y > parameters.GROUND and t.c.z < parameters.VISIBILITY: #c denotes the center coordinate
+            if t.c.z > 1 and t.c.y > parameters.GROUND and t.c.z < parameters.VISIBILITY: #c denotes the center coordinate
                 p = []
                 for v in t.vertices():
                     x,y = cam.project(v)
-                    p.append((int(x),int(y)))
+                    if abs(x) < parameters.W and abs(y) < parameters.H:
+                        p.append((int(x),int(y)))
+                    else:
+                        break
+                if len(p) == 3:
                     color = light.get_color(t)
-                cam.draw_object(cam.screen, p, color)
+                    cam.draw_object(cam.screen, p, color)
 
 class ManualObject3D(Object3D):
 
