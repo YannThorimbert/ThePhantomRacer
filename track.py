@@ -16,19 +16,20 @@ class Rail:
         self.track = track
         self.x = x
         self.y = y
-        self.obstacles_pos = set()
         self.obstacles = []
-        self.pos = V3(x*track.railw,y*track.railh,0)
+        self.pos = V3(x*track.railw, y*track.railh, 0)
+        self.middlepos = self.pos + V3(self.track.railw//2,self.track.railh//2,0)
 
     def get_pos(self,z):
         pos = V3(self.pos)
         pos.z = z
         return pos
 
-    def append_obstacle(self, obs):
-        assert obs.from_center.z == int(obs.from_center.z)
-        self.obstacles.append(obs)
-        self.obstacles_pos.add(obs.from_center.z)
+    def get_middlepos(self,z):
+        pos = V3(self.middlepos)
+        pos.z = z
+        return pos
+
 
 class ThingManager:
 
@@ -51,19 +52,18 @@ class ThingManager:
 
 class Track: #store end
 
-    def __init__(self, railw, railh, y=None, nx=3, ny=1):
+    def __init__(self, railw, railh, zfinish, nx=3, ny=1):
         self.things_objects = []
         self.things_paths = []
-        self.obstacles_objects = []
-        self.obstacles_paths = []
+        self.obstacles = []
         #
-        self.y = y
-        if self.y is None:
-            self.y = parameters.GROUND + 1
         self.x1 = 0
         self.x2 = railw*nx
+        self.y1 = 0
+        self.y2 = railh*ny
         #
         self.nx, self.ny = nx, ny
+        self.zfinish = zfinish
         self.railw, self.railh = railw, railh
         self.rails = thorpy.gamestools.basegrid.BaseGrid(nx,ny)
         for x,y in self.rails:
@@ -72,11 +72,10 @@ class Track: #store end
     def add_visual_rails(self,color=(0,0,0)):
         for x in range(self.nx+1):
             xrail = x*self.railw
-##            print("adding",x,xrail)
-            path = Path3D([V3(xrail,self.y,0),V3(xrail,self.y,50)],False,color)
-            self.add_thing(path,200,800,100)
-
-
+            for y in range(self.ny+1):
+                yrail = y*self.railh
+                path = Path3D([V3(xrail,yrail,0),V3(xrail,yrail,30)],False,color)
+                self.add_thing(path,0,self.zfinish,50)
 
     def add_thing(self, thing, frompos, topos, spacing, maxn=None):
         n = (topos-frompos)//spacing
@@ -95,28 +94,12 @@ class Track: #store end
                 self.things_objects.append(cpy)
 
     def add_thing_on_rail(self, x, y, thing, frompos, topos, spacing, maxn=None):
-        thing.set_pos(self.rails[x][y].get_pos(0))
+        thing.set_pos(parameters.scene.relative_to_cam(self.rails[x,y].get_pos(0)))
         self.add_thing(thing, frompos, topos, spacing, maxn)
 
-    def add_obstacle(self, obstacle, rail_x, rail_y, z, center=False):
-##        obstacle.set_pos(self.rails[rail_x,rail_y].get_pos(z))
-        obstacle.move(self.rails[rail_x,rail_y].get_pos(z))
-        if center:
-            obstacle.move(V3(self.railw//2,0,0))
-        type_ = get_type(obstacle)
-        if type_ == "p":
-            self.obstacles_paths.append(obstacle)
-        else:
-            self.obstacles_objects.append(obstacle)
-        self.rails[rail_x,rail_y].append_obstacle(obstacle)
-
-
     def get_all_objs(self):
-        return self.things_objects + self.things_paths +\
-                self.obstacles_objects + self.obstacles_paths
+        return self.things_objects + self.things_paths
 
-    def get_nonthings(self):
-        return self.obstacles_objects + self.obstacles_paths
 
     def refresh_and_draw_things(self, cam, light):
         #things never overlap, and can never appear in front of an object
@@ -138,7 +121,7 @@ class Track: #store end
             if thing.visible:
                 p = []
                 for t in thing.points:
-                    if t.z > 0 and t.y > parameters.GROUND:
+                    if t.z > 0:
                         x,y = cam.project(t)
                         p.append((int(x),int(y)))
                         if thing.closed:
@@ -153,4 +136,8 @@ class Track: #store end
                     elif thing.manager.should_continue():
                         thing.move(thing.manager.spacing_move)
                         thing.manager.increment()
+
+    def rail_centers(self):
+        for rail in self.rails.itercells():
+            yield V3(rail.middlepos)
 

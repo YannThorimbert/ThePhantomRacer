@@ -46,6 +46,10 @@ class Camera:
         for o in self.objs:
             o.move(delta)
 
+    def set_pos(self, pos):
+        delta = pos - self.from_init
+        self.move(delta)
+
     def rotate(self, axis, angle): #a optimiser
         angle *= -1.
         func = "rotate_"+axis

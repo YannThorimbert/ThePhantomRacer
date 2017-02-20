@@ -1,5 +1,6 @@
 from pygame.math import Vector3 as V3
 import parameters
+from scene import Scene
 
 class Race:
 

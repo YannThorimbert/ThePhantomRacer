@@ -2,10 +2,17 @@ from core3d import ManualObject3D, Object3D, Triangle, Path3D
 from pygame.math import Vector3 as V3
 
 def rectangle(a,b,color=(0,0,0)):
-    t1 = ManualObject3D([Triangle(V3(-a,0,0), V3(a,0,0), V3(a,b,0),
+##    """a and b are the semi-sides"""
+##    t1 = ManualObject3D([Triangle(V3(-a,-b,0), V3(a,-b,0), V3(a,b,0),
+##                                            color=V3(color)),
+##                            Triangle(V3(a,b,0), V3(-a,b,0), V3(-a,-b,0),
+##                                            color=V3(color))])
+    t1 = ManualObject3D([Triangle(V3(0,0,0), V3(a,0,0), V3(a,b,0),
                                             color=V3(color)),
-                            Triangle(V3(a,b,0), V3(-a,b,0), V3(-a,0,0),
+                            Triangle(V3(0,0,0), V3(a,b,0), V3(0,b,0),
                                             color=V3(color))])
+    t1.move(V3(-a/2,-b/2,0))
+    t1.from_init = V3()
     t1.refresh_normals()
     return t1
 

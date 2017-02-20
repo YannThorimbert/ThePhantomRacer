@@ -14,14 +14,22 @@ import random
 from track import Track
 from scene import Scene
 from race import Race
+from obstacle import Obstacle
 #be careful:
 #   cam need to know all!!!!
 
 ##OverflowError: signed short integer is greater than maximum
 #       ==> si continue, faire comme pour Object3D avec control des val abs
 
+
+2.
 #tordre vitesse plutot que ajouter. Preserver norme.
-#obstacles: tous les obstacles doivent passer par rails ! ==> pas de position par user
+
+3.
+#collisions - empecher la superposition. Check collisions que avec obstacles!!! entre opponents, gerer AVANT changement de rails...
+
+4.
+#IA
 
 
 # ##############################################################################
@@ -65,11 +73,12 @@ from race import Race
 
 
 def init_scene(scene): #debugging only
-    objs = []
-    parameters.GROUND = parameters.INITIAL_GROUND
-    parameters.CAMPOS = V3()
-    parameters.refresh()
+    parameters.scene = scene
+    random.seed(3)
+    parameters.scene = scene
+    scene.cam = Camera(scene.screen, fov=512, d=2, objs=[])
     #
+
     light_pos = V3(0,1000,-1000)
     light_m = V3(20,20,20)
     light_M = V3(200,200,200)
@@ -77,66 +86,53 @@ def init_scene(scene): #debugging only
     scene.light = light
     #hero
     hero_color = V3(70,70,255)
-    wings = primitivemeshes.rectangle(5,2,hero_color)
-    hero = vessel.Vessel("f5.stl",more_triangles=wings.triangles)
-    for t in hero.triangles:
-        t.color = hero_color
-        t.ecolor = t.color
-    hero.rotate_around_center_x(-90)
-    hero.compute_box1D()
+    def wings(a,b,color):
+        return primitivemeshes.rectangle(a,b,color).triangles
+    def create_vessel(color):
+        v = vessel.Vessel("f5.stl",more_triangles=wings(5,1,color))
+        v.rotate_around_center_x(-90)
+        v.compute_box3D()
+        v.set_color(color)
+        return v
+    hero = create_vessel(hero_color)
     ##hero = hero.get_splitted_copy(threshold=-2.5)
-    hero.dyn = vessel.Dynamics(10,2,hero)
+    hero.dyn = vessel.Dynamics(1,1,hero)
     scene.hero = hero
-    objs.append(hero)
+    scene.objs.append(hero)
     #track
-    track = Track(60,60,nx=3)
-##    def get_thing(zpos, track):
-##        thing1 = primitivemeshes.triangle(2,(0,0,255))
-##        thing1.move(V3(track.x1,track.y,zpos))
-##        thing2 = primitivemeshes.triangle(2,(0,0,255))
-##        thing2.move(V3(track.x2,track.y,zpos))
-##        thing3 = primitivemeshes.p_line((track.x1,track.y,zpos),
-##                                        (track.x2,track.y,zpos), (0,0,255))
-##        return thing1, thing2, thing3
-##    left,right,middle = get_thing(0, track)
-##    track.add_thing(left, frompos=0, topos=1400, spacing=50, maxn=None)
-##    track.add_thing(right, 0, 1400, 50, None)
-##    track.add_thing(middle, 0, 1400, 50, None)
-    #
-    track.add_visual_rails()
+    track = Track(12,12,zfinish=1000,nx=3,ny=2)
     scene.track = track
     #obstacles
-    obstacle = primitivemeshes.cube(10, (255,0,0))
-##    obstacle.set_pos(V3(0,track.y,200))
-##    track.add_obstacle(obstacle,0,0,500)
-    track.add_obstacle(obstacle.get_copy(),1,0,500)
-    obstacle.compute_box1D()
+##    Obstacle(1,0,200,primitivemeshes.cube(track.railw//2, (255,0,0)))
+##    Obstacle(0,0,50,primitivemeshes.rectangle(track.railw,track.railh,(0,0,255)))
+    Obstacle(1,0,110,primitivemeshes.rectangle(track.railw,track.railh,(0,255,255)))
+    Obstacle(0,0,800,primitivemeshes.rectangle(track.railw,track.railh,(0,255,255)))
     #
-    poly = primitivemeshes.p_disk(10.,filled=False,n=20)
-    poly.move(V3(0,parameters.GROUND+parameters.YFLIGHT,250))
-    objs.append(poly)
+    track.add_visual_rails()
+    finish = primitivemeshes.rectangle(track.railw,track.railh,(0,255,0))
+    for pos in track.rail_centers():
+        pos.z = track.zfinish
+        finish.set_pos(pos)
+        finish.set_color(random.choice(drawing.colors))
+        scene.objs.append(finish.get_copy())
+    scene.track = track
+    scene.opponents = [create_vessel(random.choice(drawing.colors)) for i in range(1)]
+    scene.objs += scene.opponents
     #
-    scene.opponents = [hero.get_copy() for i in range(2)]
-    random.seed(3)
-    for o in scene.opponents:
-        o.move(V3(random.randint(-2,2)*10,random.randint(-2,2)*10, random.randint(4,6)*10))
-        o.set_color(random.choice(drawing.colors))
-    objs += scene.opponents
-    scene.objs = objs
-    scene.cam = Camera(scene.screen, fov=512, d=2, objs=None)
-    scene.objs += track.get_nonthings()
     scene.refresh_cam()
+##    scene.init_cam()
     scene.put_hero_on_rail(0,0)
+    for i,o in enumerate(scene.opponents):
+        scene.put_opponent_on_rail(o,i+1,0,25)
+    scene.mytrick()
+
 
 
 if __name__ == "__main__":
     app = thorpy.Application((parameters.W,parameters.H))
     screen = thorpy.get_screen()
-
     ##cam.move(V3(0,20,0))
-
     g = thorpy.Ghost.make()
-
 
     ##thorpy.application.SHOW_FPS = True
     race = Race()

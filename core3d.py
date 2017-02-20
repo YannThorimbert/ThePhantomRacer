@@ -54,7 +54,34 @@ def get_triangles(lines):
     assert k == 0
     return triangles
 
-def get_hitbox_points(points):
+
+##def get_hitbox1D_points(points):
+##    zlist = [p[2] for p in points]
+##    return min(zlist), max(zlist)
+##
+##class Box1D: #z-limits of the object
+##
+##    def __init__(self, obj):
+##        self.obj = obj
+##        if obj is not None:
+##            self.zmin, self.zmax = get_hitbox1D_points(obj.get_vertices())
+##        else:
+##            self.zmin, self.zmax = None, None
+##
+##    def collide_point(self, z):
+##        return self.zmin < z < self.zmax
+##
+##    def collide_box(self, b):
+##        if self.collide_point(b.zmin):
+##            return True
+##        else:
+##            return self.collide_point(b.zmax)
+##
+##    def move(self, delta):
+##        self.zmin += delta
+##        self.zmax += delta
+
+def get_hitbox3D_points(points):
     mins = [float("inf")]*3
     maxs = [-float("inf")]*3
     for p in points:
@@ -63,63 +90,20 @@ def get_hitbox_points(points):
                 mins[i] = p[i]
             elif p[i] > maxs[i]:
                 maxs[i] = p[i]
+    if maxs[2] == mins[2]:
+        maxs[2] += 100
     return [mins[0],maxs[0]], [mins[1],maxs[1]], [mins[2],maxs[2]]
-
-def get_hitbox1D_points(points):
-    zlist = [p[2] for p in points]
-    return min(zlist), max(zlist)
-
-class Box1D: #z-limits of the object
-
-    def __init__(self, obj):
-        self.obj = obj
-        self.zmin, self.zmax = get_hitbox1D_points(obj.get_vertices())
-
-    def collide_point(self, z):
-        return self.zmin < z < self.zmax
-
-    def collide_box(self, b):
-        if self.collide_point(b.zmin):
-            return True
-        else:
-            return self.collide_point(b.zmax)
-
-    def move(self, delta):
-        self.zmin += delta
-        self.zmax += delta
 
 class Box3D: #nb: if vessels grossly remains in the same direction, do not need to recompute box
 
     def __init__(self, obj):
         self.obj = obj
-        self.x, self.y, self.z = get_hitbox_points(obj.get_vertices())
+        self.x, self.y, self.z = get_hitbox3D_points(obj.get_vertices())
         self.points = []
         for i in range(2):
             for j in range(2):
                 for k in range(2):
                     self.points.append(V3(self.x[i],self.y[j],self.z[k]))
-
-    def get_object_from_box(self, color=(0,0,0)):
-        import primitivemeshes
-        cube = primitivemeshes.cube(1.,color)
-        cube.scale_x(self.x[1]-self.x[0])
-        cube.scale_y(self.y[1]-self.y[0])
-        cube.scale_z(self.z[1]-self.z[0])
-        return cube
-
-    def collide_point(self, p):
-        x = self.x[0] < p[0] < self.x[1]
-        if x:
-            y = self.y[0] < p[1] < self.y[1]
-            if y:
-                return self.z[0] < p[2] < self.z[1]
-        return False
-
-    def collide_box(self, b):
-        for p in self.points:
-            if b.collide_point(p):
-                return True
-        return False
 
     def move(self, delta):
         self.x[0] += delta[0]
@@ -128,6 +112,9 @@ class Box3D: #nb: if vessels grossly remains in the same direction, do not need 
         self.y[1] += delta[1]
         self.z[0] += delta[2]
         self.z[1] += delta[2]
+
+    def __repr__(self):
+        return str(self.x) + str(self.y) + str(self.z)
 
 
 
@@ -273,7 +260,7 @@ class Path3D:
         self.points = points #list of vectors
         self.closed = closed
         self.visible = True
-        self.from_center = V3()
+        self.from_init = V3()
         self.color = color
         self.filled = False
         self.box = None
@@ -281,18 +268,19 @@ class Path3D:
     def compute_box3D(self):
         self.box = Box3D(self)
 
-    def compute_box1D(self):
-        self.box = Box1D(self)
+##    def compute_box1D(self):
+##        self.box = Box1D(self)
 
     def move(self, delta):
         for v in self.points:
             v += delta
-        self.from_center += delta
+        self.from_init += delta
         if self.box:
-            self.box.move(delta.z)
+            self.box.move(delta)
 
     def set_pos(self, pos):
-        delta = pos - self.from_center
+        delta = pos - self.from_init
+##        print("Delta",delta,pos,self.from_init)
         self.move(delta)
 
     def rotate_x(self, angle, refresh=True):
@@ -300,7 +288,7 @@ class Path3D:
             v.rotate_x_ip(angle)
 
     def rotate_around_center_x(self, angle, refresh=True):
-        tmp = V3(self.from_center)
+        tmp = V3(self.from_init)
         self.move(-tmp)
         self.rotate_x(angle, refresh)
         self.move(tmp)
@@ -310,7 +298,7 @@ class Path3D:
             v.rotate_y_ip(angle)
 
     def rotate_around_center_y(self, angle, refresh=True):
-        tmp = V3(self.from_center)
+        tmp = V3(self.from_init)
         self.move(-tmp)
         self.rotate_y(angle, refresh)
         self.move(tmp)
@@ -320,7 +308,7 @@ class Path3D:
             v.rotate_z_ip(angle)
 
     def rotate_around_center_z(self, angle, refresh=True):
-        tmp = V3(self.from_center)
+        tmp = V3(self.from_init)
         self.move(-tmp)
         self.rotate_z(angle, refresh)
         self.move(tmp)
@@ -332,7 +320,7 @@ class Path3D:
     def get_copy(self):
         points = [V3(t) for t in self.points]
         cop = Path3D(points, self.closed, V3(self.color))
-        cop.from_center = V3(self.from_center)
+        cop.from_init = V3(self.from_init)
         return cop
 
     def set_color(self, color):
@@ -341,7 +329,7 @@ class Path3D:
     def refresh_and_draw(self, cam, light):
         p = []
         for t in self.points:
-            if t.z > 1 and t.y > parameters.GROUND and t.z < parameters.VISIBILITY:
+            if t.z > 1:
                 x,y = cam.project(t)
                 p.append((int(x),int(y)))
         if self.closed:
@@ -369,7 +357,7 @@ class Object3D(Path3D):
         self.triangles = get_triangles(self.lines) #triangles are unique
         if more_triangles:
             self.triangles += more_triangles
-        self.from_center = V3()
+        self.from_init = V3()
         vset = self.get_vertices_set()
         self.vertices = {val:V3(val) for val in vset} #vertice are duplicate now
         self.compactize() #...and now they are not
@@ -403,9 +391,9 @@ class Object3D(Path3D):
     def move(self, delta):
         for v in self.vertices.values():
             v += delta
-        self.from_center += delta
+        self.from_init += delta
         if self.box:
-            self.box.move(delta.z)
+            self.box.move(delta)
 
     def rotate_x(self, angle, refresh=True):
         for v in self.vertices.values():
@@ -414,7 +402,7 @@ class Object3D(Path3D):
             self.refresh_normals()
 
     def rotate_around_center_x(self, angle, refresh=True):
-        tmp = V3(self.from_center)
+        tmp = V3(self.from_init)
         self.move(-tmp)
         self.rotate_x(angle, refresh)
         self.move(tmp)
@@ -426,7 +414,7 @@ class Object3D(Path3D):
             self.refresh_normals()
 
     def rotate_around_center_y(self, angle, refresh=True):
-        tmp = V3(self.from_center)
+        tmp = V3(self.from_init)
         self.move(-tmp)
         self.rotate_y(angle, refresh)
         self.move(tmp)
@@ -438,7 +426,7 @@ class Object3D(Path3D):
             self.refresh_normals()
 
     def rotate_around_center_z(self, angle, refresh=True):
-        tmp = V3(self.from_center)
+        tmp = V3(self.from_init)
         self.move(-tmp)
         self.rotate_z(angle, refresh)
         self.move(tmp)
@@ -503,7 +491,7 @@ class Object3D(Path3D):
                     break
         #
         cop = ManualObject3D(triangles)
-        cop.from_center = V3(self.from_center)
+        cop.from_init = V3(self.from_init)
         if refresh_normals:
             cop.refresh_normals()
         return cop #! font forget to refresh normals before first display!
@@ -511,7 +499,7 @@ class Object3D(Path3D):
     def get_copy(self, refresh_normals=True):
         triangles = [t.copy() for t in self.triangles]
         cop = ManualObject3D(triangles)
-        cop.from_center = V3(self.from_center)
+        cop.from_init = V3(self.from_init)
         if refresh_normals:
             cop.refresh_normals()
         return cop
@@ -523,7 +511,7 @@ class Object3D(Path3D):
     def refresh_and_draw(self, cam, light):
         self.refresh()
         for t in self.triangles:
-            if t.c.z > 1 and t.c.y > parameters.GROUND and t.c.z < parameters.VISIBILITY: #c denotes the center coordinate
+            if t.c.z > 1: #c denotes the center coordinate
                 p = []
                 for v in t.vertices():
                     x,y = cam.project(v)
@@ -539,7 +527,7 @@ class ManualObject3D(Object3D):
 
     def __init__(self, triangles):
         self.triangles = triangles
-        self.from_center = V3()
+        self.from_init = V3()
         vset = self.get_vertices_set()
         self.vertices = {val:V3(val) for val in vset}
         self.compactize()
