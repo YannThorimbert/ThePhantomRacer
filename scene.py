@@ -18,35 +18,19 @@ class Scene:
         self.i = 0 #frame
 
     def refresh_screen(self):
-    ##    poly.rotate_around_center_y(1)
-        for o in self.opponents:
-            o.move(V3(0,0,parameters.SPEED))
-        self.objs.sort(key=lambda x:x.from_init.length(), reverse=True)
-        self.screen.fill((255,255,255))
-        self.screen.fill((0,255,0),self.screen_rect)
+        #in replay mode, sort according to length, not z!!!
+##        self.objs.sort(key=lambda x:x.from_init.length(), reverse=True)
+        self.objs.sort(key=lambda x:x.from_init.z, reverse=True)
+        self.screen.fill((0,0,155))
+        self.screen.fill((0,200,0),self.screen_rect)
+##        self.screen.fill((0,0,0))
         self.track.refresh_and_draw_things(self.cam, self.light)
-        for obj in self.objs: #pas boucler sur objs mais sur tous les triangles de la scen!!! ==> class scene, le concept de obj est la que pour user transfos ?
+        for obj in self.objs:
             if obj.visible:
                 obj.refresh_and_draw(self.cam, self.light)
-##        for obs in self.track.get_nonthings():
-##            if obs.collide(self.hero) or self.hero.collide(obs):
-##                print("collision")
         pygame.display.flip()
 
-    def func_time(self):
-        dyn = self.hero.dyn
-        self.i += 1
-        if self.i%100 == 0:
-##            print(self.hero.railx, self.hero.raily)
-            print("a",dyn.velocity)
-        self.check_finish()
-##        self.cam.move(V3(0,0,parameters.SPEED))
-        self.move_hero(V3(0,0,parameters.SPEED))
-        self.refresh_screen()
-        dyn.refresh()
-        if self.cam.from_init.y < 0:
-            if dyn.velocity.y < 0:
-                dyn.velocity.y = 0
+    def treat_commands(self,dyn):
         press = pygame.key.get_pressed()
         if press[pygame.K_RIGHT]:
             new_x = self.hero.railx + 1
@@ -77,12 +61,27 @@ class Scene:
             dyn.velocity.z += self.hero.engine.on()
         elif press[pygame.K_x]:
             self.race.init_scene(Scene(self.race))
+
+    def func_time(self):
+        dyn = self.hero.dyn
+        self.i += 1
+        if self.i%100 == 0:
+            pass
+        self.check_finish()
+        self.move_hero(V3(0,0,parameters.SPEED))
+        self.refresh_screen()
+        dyn.refresh()
+        if self.cam.from_init.y < 0:
+            if dyn.velocity.y < 0:
+                dyn.velocity.y = 0
+        self.treat_commands(dyn)
         #handle opponents ia
         for o in self.opponents:
             o.dyn.velocity.z += o.engine.on()
             o.move(o.dyn.velocity)
         self.cam.move(dyn.velocity)
         self.obstacles_collisions()
+        self.hide_useless_obstacles()
 
     def refresh_cam(self):
         self.cam.objs = self.objs + self.track.get_all_objs()
@@ -142,10 +141,9 @@ class Scene:
                 print("OPPONENT FINISH")
 
     def obstacles_collisions(self):
-        t = self.track
         for v in self.opponents+[self.hero]:
-            for o in t.obstacles:
-                if o.obj.visible:
+            for o in self.track.obstacles:
+                if o.living:
                     z = o.box.z[0] <= v.box.z[1] <= o.box.z[1]
                     if z:
                         x1 = o.box.x[0] <= v.box.x[0] <= o.box.x[1]
@@ -156,4 +154,12 @@ class Scene:
                             if y1 or y2:
                                 print(self.i,"collision",v)
                                 v.handle_obstacle_collision(o)
+
+    def hide_useless_obstacles(self):
+        for o in self.track.obstacles:
+            if o.living:
+                if o.box.z[0] <= self.hero.box.z[1]:
+                    o.obj.visible = False
+
+
 

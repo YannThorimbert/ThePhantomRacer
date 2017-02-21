@@ -329,7 +329,7 @@ class Path3D:
     def refresh_and_draw(self, cam, light):
         p = []
         for t in self.points:
-            if t.z > 1:
+            if t.z > 1 and t.z < parameters.VISIBILITY:
                 x,y = cam.project(t)
                 p.append((int(x),int(y)))
         if self.closed:
@@ -511,7 +511,7 @@ class Object3D(Path3D):
     def refresh_and_draw(self, cam, light):
         self.refresh()
         for t in self.triangles:
-            if t.c.z > 1: #c denotes the center coordinate
+            if t.c.z > 1 and t.c.z < parameters.VISIBILITY: #c denotes the center coordinate
                 p = []
                 for v in t.vertices():
                     x,y = cam.project(v)

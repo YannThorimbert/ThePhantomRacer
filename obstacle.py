@@ -13,3 +13,4 @@ class Obstacle:
         parameters.scene.track.obstacles.append(self)
         self.obj.compute_box3D()
         self.box = self.obj.box
+        self.living = True

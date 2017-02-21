@@ -23,8 +23,6 @@ import levelgen
 ##OverflowError: signed short integer is greater than maximum
 #       ==> si continue, faire comme pour Object3D avec control des val abs
 
-
-
 2.
 #tordre vitesse plutot que ajouter. Preserver norme.
 #vitesse de virage ~ norme (en + de vitesse intrinseque)
@@ -34,6 +32,12 @@ import levelgen
 
 4.
 #IA
+
+5.
+#meilleure levelgen
+
+6.
+#course complete
 
 
 # ##############################################################################
@@ -106,11 +110,12 @@ def init_scene(scene): #debugging only
     scene.objs.append(hero)
     #track
 ##    track = Track(12,12,zfinish=1000,nx=3,ny=2)
-    lg = levelgen.LevelGenerator(1000,3,2)
+    lg = levelgen.LevelGenerator(3000,3,2)
     rw,rh = parameters.RAILW,parameters.RAILH
-    possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255)),
-                            primitivemeshes.cube(0.8*rw/2.,(255,0,0))]
-    lg.add_static_obstacles(2,possible_obstacles)
+    possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255))]
+##    possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255)),
+##                            primitivemeshes.cube(0.8*rw/2.,(255,0,0))]
+    lg.add_static_obstacles(1,possible_obstacles)
     track = scene.track
     #obstacles
 ##    Obstacle(1,0,200,primitivemeshes.cube(track.railw//2, (255,0,0)))
@@ -144,7 +149,7 @@ if __name__ == "__main__":
     ##cam.move(V3(0,20,0))
     g = thorpy.Ghost.make()
 
-    ##thorpy.application.SHOW_FPS = True
+    thorpy.application.SHOW_FPS = True
     race = Race()
     scene = Scene(race)
     race.init_scene(scene)

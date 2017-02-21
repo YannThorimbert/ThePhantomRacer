@@ -4,10 +4,10 @@ W,H = 900,600
 FPS = 40
 
 MOVE_DELTA_I = 5
-VISIBILITY = 1000#not used
+VISIBILITY = 500#not used
 N_DESTROY = 20
 SPEED = 0#to be deleted
-HERO_POS = V3(0,-8,20)
+HERO_POS = V3(0,-4,15)
 
 MIN_BOX_THICKNESS = 10
 
