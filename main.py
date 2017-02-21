@@ -25,9 +25,9 @@ import levelgen
 
 
 
-
 2.
 #tordre vitesse plutot que ajouter. Preserver norme.
+#vitesse de virage ~ norme (en + de vitesse intrinseque)
 
 3.
 #collisions - empecher la superposition. Check collisions que avec obstacles!!! entre opponents, gerer AVANT changement de rails...
@@ -97,10 +97,11 @@ def init_scene(scene): #debugging only
         v.rotate_around_center_x(-90)
         v.compute_box3D()
         v.set_color(color)
+        v.dyn = vessel.Dynamics(1,1,v)
         return v
     hero = create_vessel(hero_color)
+    hero.engine.force *= 2
     ##hero = hero.get_splitted_copy(threshold=-2.5)
-    hero.dyn = vessel.Dynamics(1,1,hero)
     scene.hero = hero
     scene.objs.append(hero)
     #track

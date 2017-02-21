@@ -71,6 +71,18 @@ class Dynamics:
         self.velocity.x = self.h.refresh()
         self.velocity.y = self.v.refresh()
 
+class Engine:
+
+    def __init__(self, fuel, force):
+        self.fuel = fuel
+        self.force = force
+
+    def on(self):
+        if self.fuel > 0:
+            self.fuel -= 1
+            return self.force
+        print("no fuel")
+        return 0.
 
 
 class Vessel(core3d.Object3D):
@@ -80,6 +92,7 @@ class Vessel(core3d.Object3D):
         self.dynamics = None
         self.railx = None
         self.raily = None
+        self.engine = Engine(1000, 0.01)
 
     def handle_obstacle_collision(self, obstacle):
         obstacle.obj.visible = False

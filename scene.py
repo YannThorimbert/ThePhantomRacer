@@ -34,19 +34,19 @@ class Scene:
         pygame.display.flip()
 
     def func_time(self):
+        dyn = self.hero.dyn
         self.i += 1
-##        if self.i%10 == 0:
+        if self.i%100 == 0:
 ##            print(self.hero.railx, self.hero.raily)
+            print("a",dyn.velocity)
         self.check_finish()
 ##        self.cam.move(V3(0,0,parameters.SPEED))
         self.move_hero(V3(0,0,parameters.SPEED))
         self.refresh_screen()
-        dyn = self.hero.dyn
         dyn.refresh()
         if self.cam.from_init.y < 0:
             if dyn.velocity.y < 0:
                 dyn.velocity.y = 0
-        self.cam.move(dyn.velocity)
         press = pygame.key.get_pressed()
         if press[pygame.K_RIGHT]:
             new_x = self.hero.railx + 1
@@ -73,9 +73,15 @@ class Scene:
                 if dyn.v.go_to(newpos,self.i):
                     self.hero.raily -= 1
         elif press[pygame.K_SPACE]:
-            self.hero.rotate_around_center_z(1)
+##            self.hero.rotate_around_center_z(1)
+            dyn.velocity.z += self.hero.engine.on()
         elif press[pygame.K_x]:
             self.race.init_scene(Scene(self.race))
+        #handle opponents ia
+        for o in self.opponents:
+            o.dyn.velocity.z += o.engine.on()
+            o.move(o.dyn.velocity)
+        self.cam.move(dyn.velocity)
         self.obstacles_collisions()
 
     def refresh_cam(self):
@@ -142,10 +148,12 @@ class Scene:
                 if o.obj.visible:
                     z = o.box.z[0] <= v.box.z[1] <= o.box.z[1]
                     if z:
-                        x = o.box.x[0] <= v.box.x[1] <= o.box.x[1]
-                        if x:
-                            y = o.box.y[0] <= v.box.y[1] <= o.box.y[1]
-                            if y:
+                        x1 = o.box.x[0] <= v.box.x[0] <= o.box.x[1]
+                        x2 = o.box.x[0] <= v.box.x[1] <= o.box.x[1]
+                        if x1 or x2:
+                            y1 = o.box.y[0] <= v.box.y[0] <= o.box.y[1]
+                            y2 = o.box.y[0] <= v.box.y[1] <= o.box.y[1]
+                            if y1 or y2:
                                 print(self.i,"collision",v)
                                 v.handle_obstacle_collision(o)
 

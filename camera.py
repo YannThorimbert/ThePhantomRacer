@@ -41,6 +41,7 @@ class Camera:
         return x, y
 
     def move(self, delta):
+        delta = V3(delta)
         self.from_init += delta
         delta *= -1.
         for o in self.objs:
