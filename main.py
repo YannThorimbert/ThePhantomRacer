@@ -11,15 +11,19 @@ import parameters
 import drawing
 import vessel
 import random
-from track import Track
 from scene import Scene
 from race import Race
-from obstacle import Obstacle
+##from track import Track
+##from obstacle import Obstacle
+import levelgen
+
 #be careful:
 #   cam need to know all!!!!
 
 ##OverflowError: signed short integer is greater than maximum
 #       ==> si continue, faire comme pour Object3D avec control des val abs
+
+
 
 
 2.
@@ -100,13 +104,18 @@ def init_scene(scene): #debugging only
     scene.hero = hero
     scene.objs.append(hero)
     #track
-    track = Track(12,12,zfinish=1000,nx=3,ny=2)
-    scene.track = track
+##    track = Track(12,12,zfinish=1000,nx=3,ny=2)
+    lg = levelgen.LevelGenerator(1000,3,2)
+    rw,rh = parameters.RAILW,parameters.RAILH
+    possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255)),
+                            primitivemeshes.cube(0.8*rw/2.,(255,0,0))]
+    lg.add_static_obstacles(2,possible_obstacles)
+    track = scene.track
     #obstacles
 ##    Obstacle(1,0,200,primitivemeshes.cube(track.railw//2, (255,0,0)))
 ##    Obstacle(0,0,50,primitivemeshes.rectangle(track.railw,track.railh,(0,0,255)))
-    Obstacle(1,0,110,primitivemeshes.rectangle(track.railw,track.railh,(0,255,255)))
-    Obstacle(0,0,800,primitivemeshes.rectangle(track.railw,track.railh,(0,255,255)))
+##    Obstacle(1,0,110,primitivemeshes.rectangle(track.railw,track.railh,(0,255,255)))
+##    Obstacle(0,0,800,primitivemeshes.rectangle(track.railw,track.railh,(0,255,255)))
     #
     track.add_visual_rails()
     finish = primitivemeshes.rectangle(track.railw,track.railh,(0,255,0))

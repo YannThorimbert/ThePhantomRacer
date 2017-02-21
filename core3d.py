@@ -91,7 +91,7 @@ def get_hitbox3D_points(points):
             elif p[i] > maxs[i]:
                 maxs[i] = p[i]
     if maxs[2] == mins[2]:
-        maxs[2] += 100
+        maxs[2] += parameters.MIN_BOX_THICKNESS
     return [mins[0],maxs[0]], [mins[1],maxs[1]], [mins[2],maxs[2]]
 
 class Box3D: #nb: if vessels grossly remains in the same direction, do not need to recompute box

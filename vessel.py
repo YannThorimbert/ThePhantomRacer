@@ -82,6 +82,6 @@ class Vessel(core3d.Object3D):
         self.raily = None
 
     def handle_obstacle_collision(self, obstacle):
-        obstacle.visible = False
-        parameters.scene.track.obstacles.remove(obstacle)
+        obstacle.obj.visible = False
+##        parameters.scene.track.obstacles.remove(obstacle)
 

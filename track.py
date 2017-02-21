@@ -52,11 +52,12 @@ class ThingManager:
 
 class Track: #store end
 
-    def __init__(self, railw, railh, zfinish, nx=3, ny=1):
+    def __init__(self, zfinish, nx=3, ny=1):
         self.things_objects = []
         self.things_paths = []
         self.obstacles = []
         #
+        railw, railh = parameters.RAILW, parameters.RAILH
         self.x1 = 0
         self.x2 = railw*nx
         self.y1 = 0

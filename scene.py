@@ -139,11 +139,13 @@ class Scene:
         t = self.track
         for v in self.opponents+[self.hero]:
             for o in t.obstacles:
-                z = o.box.z[0] <= v.box.z[1] <= o.box.z[1]
-                if z:
-                    x = o.box.x[0] <= v.box.x[1] <= o.box.x[1]
-                    if x:
-                        y = o.box.y[0] <= v.box.y[1] <= o.box.y[1]
-                        if y:
-                            ...
-##                            print(self.i,"collision",v)
+                if o.obj.visible:
+                    z = o.box.z[0] <= v.box.z[1] <= o.box.z[1]
+                    if z:
+                        x = o.box.x[0] <= v.box.x[1] <= o.box.x[1]
+                        if x:
+                            y = o.box.y[0] <= v.box.y[1] <= o.box.y[1]
+                            if y:
+                                print(self.i,"collision",v)
+                                v.handle_obstacle_collision(o)
+

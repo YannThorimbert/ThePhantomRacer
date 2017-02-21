@@ -9,5 +9,10 @@ N_DESTROY = 20
 SPEED = 1#to be deleted
 HERO_POS = V3(0,-8,20)
 
+MIN_BOX_THICKNESS = 10
+
+RAILW = 12
+RAILH = 12
+
 scene = None
 
