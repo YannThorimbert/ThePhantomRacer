@@ -14,5 +14,9 @@ MIN_BOX_THICKNESS = 10
 RAILW = 12
 RAILH = 12
 
+TURN = 1. / 10.
+FRICTION = 1. / 500.
+
+
 scene = None
 

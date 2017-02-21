@@ -13,8 +13,6 @@ import vessel
 import random
 from scene import Scene
 from race import Race
-##from track import Track
-##from obstacle import Obstacle
 import levelgen
 
 #be careful:
@@ -22,6 +20,8 @@ import levelgen
 
 ##OverflowError: signed short integer is greater than maximum
 #       ==> si continue, faire comme pour Object3D avec control des val abs
+
+#opti: regrouper actions des opponents dans la mm boucle, + collisions!
 
 2.
 #tordre vitesse plutot que ajouter. Preserver norme.
@@ -101,7 +101,7 @@ def init_scene(scene): #debugging only
         v.rotate_around_center_x(-90)
         v.compute_box3D()
         v.set_color(color)
-        v.dyn = vessel.Dynamics(1,1,v)
+        v.compute_dynamics()
         return v
     hero = create_vessel(hero_color)
     hero.engine.force *= 2

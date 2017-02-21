@@ -97,7 +97,7 @@ class Scene:
     def mytrick(self):
         for obj in self.cam.objs:
             if obj is not self.hero:
-                obj.move(V3(0,-8,0))
+                obj.move(V3(0,parameters.HERO_POS.y,0))
 
 
     def put_hero_on_rail(self, railx, raily, z=0):

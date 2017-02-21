@@ -1,12 +1,12 @@
+import math
 from pygame.math import Vector3 as V3
 import core3d, parameters
 
 
 class Move:
 
-    def __init__(self, vel, fighter, type_):
-        self.vel = vel
-        self.fighter = fighter
+    def __init__(self, fighter, type_):
+        self.vel = fighter.turn
         self.dest = None #x coordinate
         self.last_pressed = 0
         if type_ == "h":
@@ -29,7 +29,6 @@ class Move:
     def refresh_x(self):
         if self.dest is not None:
             delta = self.dest - parameters.scene.cam.from_init.x
-##            print("r        ", delta, self.dest, parameters.scene.cam.from_init.x)
             abs_delta = abs(delta)
             if abs_delta < 0.1:
                 self.dest = None
@@ -42,7 +41,6 @@ class Move:
     def refresh_y(self):
         if self.dest is not None:
             delta = self.dest - parameters.scene.cam.from_init.y
-##            print("r        ", delta, self.dest, parameters.scene.cam.from_init.x)
             abs_delta = abs(delta)
             if abs_delta < 2:
                 self.dest = None
@@ -62,18 +60,29 @@ class Move:
 
 class Dynamics:
 
-    def __init__(self, xvel, yvel, fighter):
-        self.h = Move(xvel, fighter, "h")
-        self.v = Move(yvel, fighter, "v")
+    def __init__(self, fighter):
+        self.h = Move(fighter, "h")
+        self.v = Move(fighter, "v")
         self.velocity = V3()
+        self.friction = fighter.friction
 
     def refresh(self):
         self.velocity.x = self.h.refresh()
         self.velocity.y = self.v.refresh()
+        self.velocity.z -= self.friction*self.velocity.z
 
-class Engine:
 
-    def __init__(self, fuel, force):
+class Part:
+
+    def __init__(self, filename, turn, friction):
+##        self.obj = core3d.Object3D(filename)
+        self.turn = turn
+        self.friction = friction
+
+class Engine(Part):
+
+    def __init__(self, filename, turn, friction, fuel, force):
+        Part.__init__(self, filename, turn, friction)
         self.fuel = fuel
         self.force = force
 
@@ -92,10 +101,24 @@ class Vessel(core3d.Object3D):
         self.dynamics = None
         self.railx = None
         self.raily = None
-        self.engine = Engine(1000, 0.01)
+        self.turn = None
+        self.friction = None
+        #
+        self.nose = Part("",1.,1.)
+        self.cockpit = Part("",1.,1.)
+        self.tail = Part("",1.,1.)
+        self.wings = Part("",1.,1.)
+        self.engine = Engine("",1.,1.,1000, 0.01)
+        self.parts = []
 
     def handle_obstacle_collision(self, obstacle):
         obstacle.obj.visible = False
         obstacle.living = False
 ##        parameters.scene.track.obstacles.remove(obstacle)
 
+    def compute_dynamics(self):
+        self.parts = [self.nose, self.cockpit, self.tail, self.wings, self.engine]
+        self.turn = sum([p.turn for p in self.parts]) * parameters.TURN
+        self.friction = sum([p.friction for p in self.parts]) * parameters.FRICTION
+        print("Dynamics:",self.turn,self.friction)
+        self.dyn = Dynamics(self)
