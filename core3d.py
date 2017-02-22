@@ -116,6 +116,18 @@ class Box3D: #nb: if vessels grossly remains in the same direction, do not need 
     def __repr__(self):
         return str(self.x) + str(self.y) + str(self.z)
 
+    def collide(self, other):
+        z = self.z[0] <= other.z[1] <= self.z[1]
+        if z:
+            x1 = self.x[0] <= other.x[0] <= self.x[1]
+            x2 = self.x[0] <= other.x[1] <= self.x[1]
+            if x1 or x2:
+                y1 = self.y[0] <= other.y[0] <= self.y[1]
+                y2 = self.y[0] <= other.y[1] <= self.y[1]
+                if y1 or y2:
+                    return True
+        return False
+
 
 
 #les triangles font des references a des points, qui eux subissent les transfos!

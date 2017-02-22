@@ -18,17 +18,22 @@ import levelgen
 #be careful:
 #   cam need to know all!!!!
 
+#faire un grep '#' pour checker qu'il y a pas de trucs importants qqpart
+
 ##OverflowError: signed short integer is greater than maximum
 #       ==> si continue, faire comme pour Object3D avec control des val abs
 
 #opti: regrouper actions des opponents dans la mm boucle, + collisions!
+#rotation en virage. hero_pos.z change avec la vitesse!
+
+0.
+#probleme du decallage y
+
+1.
+#path dessine pourtour
 
 2.
-#tordre vitesse plutot que ajouter. Preserver norme.
-#vitesse de virage ~ norme (en + de vitesse intrinseque)
-
-3.
-#collisions - empecher la superposition. Check collisions que avec obstacles!!! entre opponents, gerer AVANT changement de rails...
+#path with normal and handle light
 
 4.
 #IA
@@ -104,7 +109,11 @@ def init_scene(scene): #debugging only
         v.compute_dynamics()
         return v
     hero = create_vessel(hero_color)
-    hero.engine.force *= 2
+    hero.is_hero = True
+    hero.engine.force *= 1.5
+    hero.compute_dynamics()
+    hero.mass /= 2.
+    hero.name = "Hero"
     ##hero = hero.get_splitted_copy(threshold=-2.5)
     scene.hero = hero
     scene.objs.append(hero)
@@ -131,7 +140,7 @@ def init_scene(scene): #debugging only
         finish.set_color(random.choice(drawing.colors))
         scene.objs.append(finish.get_copy())
     scene.track = track
-    scene.opponents = [create_vessel(random.choice(drawing.colors)) for i in range(1)]
+    scene.opponents = [create_vessel(random.choice(drawing.colors)) for i in range(2)]
     scene.objs += scene.opponents
     #
     scene.refresh_cam()
@@ -149,7 +158,7 @@ if __name__ == "__main__":
     ##cam.move(V3(0,20,0))
     g = thorpy.Ghost.make()
 
-    thorpy.application.SHOW_FPS = True
+##    thorpy.application.SHOW_FPS = True
     race = Race()
     scene = Scene(race)
     race.init_scene(scene)

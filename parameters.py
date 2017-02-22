@@ -16,6 +16,9 @@ RAILH = 12
 
 TURN = 1. / 10.
 FRICTION = 1. / 500.
+MASS = 1. / 10.
+
+OVERTAKE_SLOWER = 0.75
 
 
 scene = None

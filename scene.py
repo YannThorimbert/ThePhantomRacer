@@ -1,7 +1,7 @@
 from pygame.math import Vector3 as V3
 import pygame
 import thorpy
-import parameters
+import parameters, vessel
 
 class Scene:
 
@@ -30,56 +30,46 @@ class Scene:
                 obj.refresh_and_draw(self.cam, self.light)
         pygame.display.flip()
 
-    def treat_commands(self,dyn):
+
+    def treat_commands(self): #a unifier (facile) et utiliser dans collisions
         press = pygame.key.get_pressed()
         if press[pygame.K_RIGHT]:
-            new_x = self.hero.railx + 1
-            if new_x < self.track.nx:
-                newpos = self.track.rails[new_x,self.hero.raily].middlepos.x
-                if dyn.h.go_to(newpos,self.i):
-                    self.hero.railx += 1
+            self.hero.change_rail(1,0)
         elif press[pygame.K_LEFT]:
-            new_x = self.hero.railx - 1
-            if new_x >= 0:
-                newpos = self.track.rails[new_x,self.hero.raily].middlepos.x
-                if dyn.h.go_to(newpos,self.i):
-                    self.hero.railx -= 1
+            self.hero.change_rail(-1,0)
         if press[pygame.K_UP]:
-            new_y = self.hero.raily + 1
-            if new_y < self.track.ny:
-                newpos = self.track.rails[self.hero.railx,new_y].middlepos.y
-                if dyn.v.go_to(newpos,self.i):
-                    self.hero.raily += 1
+            self.hero.change_rail(0,1)
         elif press[pygame.K_DOWN]:
-            new_y = self.hero.raily - 1
-            if new_y >= 0:
-                newpos = self.track.rails[self.hero.railx,new_y].middlepos.y
-                if dyn.v.go_to(newpos,self.i):
-                    self.hero.raily -= 1
+            self.hero.change_rail(0,-1)
         elif press[pygame.K_SPACE]:
 ##            self.hero.rotate_around_center_z(1)
-            dyn.velocity.z += self.hero.engine.on()
+            self.hero.boost()
         elif press[pygame.K_x]:
             self.race.init_scene(Scene(self.race))
 
     def func_time(self):
-        dyn = self.hero.dyn
         self.i += 1
-        if self.i%100 == 0:
-            pass
+##        if self.i%10 == 0:
+##            print(self.hero.raily)
         self.check_finish()
         self.move_hero(V3(0,0,parameters.SPEED))
         self.refresh_screen()
-        dyn.refresh()
+        self.hero.dyn.refresh()
         if self.cam.from_init.y < 0:
             if dyn.velocity.y < 0:
                 dyn.velocity.y = 0
-        self.treat_commands(dyn)
-        #handle opponents ia
+        self.treat_commands()
+        for o in self.opponents + [self.hero]: #stocker 1 fois pour toutes
+            for o2 in self.opponents + [self.hero]:
+                if o.should_collide(o2):
+                    vessel.collision(o,o2)
         for o in self.opponents:
-            o.dyn.velocity.z += o.engine.on()
+            #handle opponents ia here
+##            ia.play(o)
+            o.boost() #goes into ia
+            o.dyn.refresh()
             o.move(o.dyn.velocity)
-        self.cam.move(dyn.velocity)
+        self.cam.move(self.hero.dyn.velocity)
         self.obstacles_collisions()
         self.hide_useless_obstacles()
 
@@ -144,16 +134,10 @@ class Scene:
         for v in self.opponents+[self.hero]:
             for o in self.track.obstacles:
                 if o.living:
-                    z = o.box.z[0] <= v.box.z[1] <= o.box.z[1]
-                    if z:
-                        x1 = o.box.x[0] <= v.box.x[0] <= o.box.x[1]
-                        x2 = o.box.x[0] <= v.box.x[1] <= o.box.x[1]
-                        if x1 or x2:
-                            y1 = o.box.y[0] <= v.box.y[0] <= o.box.y[1]
-                            y2 = o.box.y[0] <= v.box.y[1] <= o.box.y[1]
-                            if y1 or y2:
-                                print(self.i,"collision",v)
-                                v.handle_obstacle_collision(o)
+                    if o.box.collide(v.box):
+                        print(self.i,"collision",v)
+                        v.obstacle_collision(o)
+
 
     def hide_useless_obstacles(self):
         for o in self.track.obstacles:

@@ -16,6 +16,9 @@ class Move:
         else:
             raise Exception("Uknown type",type_)
 
+    def reset_i(self):
+        self.i = self.last_pressed + parameters.MOVE_DELTA_I + 1
+
     def go_to(self, dest, i):
         if i > self.last_pressed + parameters.MOVE_DELTA_I:
             self.dest = dest
@@ -71,54 +74,160 @@ class Dynamics:
         self.velocity.y = self.v.refresh()
         self.velocity.z -= self.friction*self.velocity.z
 
+    def reset_i(self):
+        self.h.reset_i()
+        self.v.reset_i()
+
 
 class Part:
 
-    def __init__(self, filename, turn, friction):
+    def __init__(self, filename):
 ##        self.obj = core3d.Object3D(filename)
-        self.turn = turn
-        self.friction = friction
+        self.turn = 1.
+        self.friction = 1.
+        self.mass = 1.
 
 class Engine(Part):
 
-    def __init__(self, filename, turn, friction, fuel, force):
-        Part.__init__(self, filename, turn, friction)
-        self.fuel = fuel
-        self.force = force
+    def __init__(self, filename):
+        Part.__init__(self, filename)
+        self.fuel = 10000
+        self.force = 0.01
 
-    def on(self):
-        if self.fuel > 0:
-            self.fuel -= 1
-            return self.force
-        print("no fuel")
-        return 0.
+def sign(x):
+    if x < 0:
+        return -1
+    elif x > 0:
+        return 1
+    return 0
+
+def invsign(x):
+    if x < 0:
+        return 1
+    elif x > 0:
+        return -1
+    return 0
+
+def collision(v1,v2):
+    if v1.mass > v2.mass:
+        lightest = v2
+        heaviest = v1
+    else:
+        lightest = v1
+        heaviest = v2
+    #
+    vel = lightest.dyn.velocity
+    can = lightest.change_rail(invsign(vel.x),invsign(vel.y))
+    if not can:
+        vel = heaviest.dyn.velocity
+        can = heaviest.change_rail(invsign(vel.x),invsign(vel.y))
+        if not can:
+            #NB : plutot faire un echange de vitesse du plus grand au + petit!
+            if vel.z > lightest.dyn.velocity.z: #lightest is overtaken
+                tmp = vel.z
+                vel.z = lightest.dyn.velocity.z
+                lightest.dyn.velocity.z = tmp
+            else: #lightest is overtaking
+                lightest.dyn.velocity.z = vel.z*parameters.OVERTAKE_SLOWER
+        else:
+            heaviest.colliding_with = lightest
+    else:
+        lightest.colliding_with = heaviest#NB: to reset
+
 
 
 class Vessel(core3d.Object3D):
+    current_id = 0
 
     def __init__(self, filename, more_triangles=None):
         core3d.Object3D.__init__(self,filename, more_triangles)
-        self.dynamics = None
+        self.dyn = None
         self.railx = None
         self.raily = None
+        self.is_hero = False
+        self.colliding_with = None
+        #
         self.turn = None
         self.friction = None
+        self.mass = None
+        self.engine_force = None
         #
-        self.nose = Part("",1.,1.)
-        self.cockpit = Part("",1.,1.)
-        self.tail = Part("",1.,1.)
-        self.wings = Part("",1.,1.)
-        self.engine = Engine("",1.,1.,1000, 0.01)
+        self.nose = Part("")
+        self.cockpit = Part("")
+        self.tail = Part("")
+        self.wings = Part("")
+        self.engine = Engine("")
         self.parts = []
+        #
+        self.name = "no name"
+        #
+        self.id = Vessel.current_id
+        Vessel.current_id += 1
 
-    def handle_obstacle_collision(self, obstacle):
+    def change_rail(self, deltax, deltay):
+        if deltax:
+            track = parameters.scene.track
+            newx = self.railx + deltax
+            if -1 < newx < track.nx:
+                pos = track.rails[newx,self.raily].middlepos.x
+                if self.dyn.h.go_to(pos, parameters.scene.i):
+                    self.railx += deltax
+                    return True
+        if deltay:
+            track = parameters.scene.track
+            newy = self.raily + deltay
+            if -1 < newy < track.ny:
+                pos = track.rails[self.railx,newy].middlepos.y
+                if self.dyn.v.go_to(pos, parameters.scene.i):
+                    self.raily += deltay
+                    return True
+        return False
+
+    def should_collide(self, other):
+        if other.id > self.id: #check self != other and forbids double-side collision
+            if self.colliding_with is not other: #check that this collision not already currently treated
+                if self.box.collide(other.box): #finally check the collision
+                    return True
+                elif other.box.collide(self.box):
+                    return True
+        return False
+
+
+    def obstacle_collision(self, obstacle):
         obstacle.obj.visible = False
         obstacle.living = False
 ##        parameters.scene.track.obstacles.remove(obstacle)
+
+    def vessel_collision(self, vessel):
+        if self.dyn.velocity.x != 0:
+            self.dyn.velocity.x *= -10
+        elif self.dyn.velocity.y != 0:
+            self.dyn.velocity.y *= -1
+        elif self.dyn.velocity.z > vessel.dyn.velocity.z:
+            if vessel.is_hero:
+                self.move(V3(0,0,-20))
+            else:
+                vessel.move(V3(0,0,20))
+        else:
+            if vessel.is_hero:
+                self.move(V3(0,0,-20))
+            else:
+                vessel.move(V3(0,0,20))
+        #cam move et enlever l'assymetrie?
 
     def compute_dynamics(self):
         self.parts = [self.nose, self.cockpit, self.tail, self.wings, self.engine]
         self.turn = sum([p.turn for p in self.parts]) * parameters.TURN
         self.friction = sum([p.friction for p in self.parts]) * parameters.FRICTION
-        print("Dynamics:",self.turn,self.friction)
+        self.mass = sum([p.mass for p in self.parts]) * parameters.MASS
+        print("Dynamics:",self.turn,self.friction,self.mass)
         self.dyn = Dynamics(self)
+        self.engine_force = self.engine.force/self.mass
+
+    def boost(self):
+        if self.engine.fuel > 0:
+            self.engine.fuel -= 1
+            self.dyn.velocity.z += self.engine_force
+        else:
+            print("no fuel")
+            return 0.
