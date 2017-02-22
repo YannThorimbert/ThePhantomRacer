@@ -7,50 +7,34 @@ class Move:
 
     def __init__(self, fighter, type_):
         self.vel = fighter.turn
-        self.dest = None #x coordinate
+        self.original_vel = fighter.turn
+        self.delta = None
         self.last_pressed = 0
-        if type_ == "h":
-            self.refresh = self.refresh_x
-        elif type_ == "v":
-            self.refresh = self.refresh_y
-        else:
-            raise Exception("Uknown type",type_)
+##        if type_ == "h":
+##            self.refresh = self.refresh_x
+##        elif type_ == "v":
+##            self.refresh = self.refresh_y
+##        else:
+##            raise Exception("Uknown type",type_)
 
     def reset_i(self):
         self.i = self.last_pressed + parameters.MOVE_DELTA_I + 1
 
-    def go_to(self, dest, i):
+    def move(self, delta, i):
         if i > self.last_pressed + parameters.MOVE_DELTA_I:
-            self.dest = dest
+            self.delta = delta
             self.last_pressed = i
+            self.vel = sign(delta)*self.original_vel
             return True
         return False
 
     def refresh(self):
-        pass
-
-    def refresh_x(self):
-        if self.dest is not None:
-            delta = self.dest - parameters.scene.cam.from_init.x
-            abs_delta = abs(delta)
-            if abs_delta < 0.1:
-                self.dest = None
-                return 0.
-            if abs_delta > self.vel:
-                return self.vel * delta/abs_delta
-            return delta
-        return 0.
-
-    def refresh_y(self):
-        if self.dest is not None:
-            delta = self.dest - parameters.scene.cam.from_init.y
-            abs_delta = abs(delta)
-            if abs_delta < 2:
-                self.dest = None
-                return 0.
-            if abs_delta > self.vel:
-                return self.vel * delta/abs_delta
-            return delta
+        if self.delta is not None:
+            if abs(self.delta) < abs(self.vel):
+                return self.delta
+            else:
+                self.delta -= self.vel
+                return self.vel
         return 0.
 
 
@@ -164,21 +148,23 @@ class Vessel(core3d.Object3D):
         self.id = Vessel.current_id
         Vessel.current_id += 1
 
-    def change_rail(self, deltax, deltay):
+    def change_rail(self, deltax, deltay): #delta changes if not self.hero
         if deltax:
             track = parameters.scene.track
             newx = self.railx + deltax
             if -1 < newx < track.nx:
-                pos = track.rails[newx,self.raily].middlepos.x
-                if self.dyn.h.go_to(pos, parameters.scene.i):
+                dest = track.rails[newx,self.raily].middlepos.x
+                delta = dest - parameters.scene.cam.from_init.x - self.from_init.x
+                if self.dyn.h.move(delta, parameters.scene.i):
                     self.railx += deltax
                     return True
         if deltay:
             track = parameters.scene.track
             newy = self.raily + deltay
             if -1 < newy < track.ny:
-                pos = track.rails[self.railx,newy].middlepos.y
-                if self.dyn.v.go_to(pos, parameters.scene.i):
+                dest = track.rails[self.railx,newy].middlepos.y
+                delta = dest - parameters.scene.cam.from_init.y - self.from_init.y
+                if self.dyn.v.move(delta, parameters.scene.i):
                     self.raily += deltay
                     return True
         return False

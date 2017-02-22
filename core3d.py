@@ -292,7 +292,6 @@ class Path3D:
 
     def set_pos(self, pos):
         delta = pos - self.from_init
-##        print("Delta",delta,pos,self.from_init)
         self.move(delta)
 
     def rotate_x(self, angle, refresh=True):

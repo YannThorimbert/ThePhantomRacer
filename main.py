@@ -16,7 +16,7 @@ from race import Race
 import levelgen
 
 #be careful:
-#   cam need to know all!!!!
+#   cam need to know all!!!! (for moving objects)
 
 #faire un grep '#' pour checker qu'il y a pas de trucs importants qqpart
 
@@ -29,6 +29,9 @@ import levelgen
 0.
 #probleme du decallage y
 
+0.5
+#bug: collision laterale, puis plus aucune fonctionne
+
 1.
 #path dessine pourtour
 
@@ -38,11 +41,17 @@ import levelgen
 4.
 #IA
 
+4.5
+#damage collisions
+
 5.
 #meilleure levelgen
 
 6.
 #course complete
+
+7.
+#garage
 
 
 # ##############################################################################
@@ -118,7 +127,6 @@ def init_scene(scene): #debugging only
     scene.hero = hero
     scene.objs.append(hero)
     #track
-##    track = Track(12,12,zfinish=1000,nx=3,ny=2)
     lg = levelgen.LevelGenerator(3000,3,2)
     rw,rh = parameters.RAILW,parameters.RAILH
     possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255))]
@@ -126,11 +134,6 @@ def init_scene(scene): #debugging only
 ##                            primitivemeshes.cube(0.8*rw/2.,(255,0,0))]
     lg.add_static_obstacles(1,possible_obstacles)
     track = scene.track
-    #obstacles
-##    Obstacle(1,0,200,primitivemeshes.cube(track.railw//2, (255,0,0)))
-##    Obstacle(0,0,50,primitivemeshes.rectangle(track.railw,track.railh,(0,0,255)))
-##    Obstacle(1,0,110,primitivemeshes.rectangle(track.railw,track.railh,(0,255,255)))
-##    Obstacle(0,0,800,primitivemeshes.rectangle(track.railw,track.railh,(0,255,255)))
     #
     track.add_visual_rails()
     finish = primitivemeshes.rectangle(track.railw,track.railh,(0,255,0))
@@ -145,10 +148,13 @@ def init_scene(scene): #debugging only
     #
     scene.refresh_cam()
 ##    scene.init_cam()
-    scene.put_hero_on_rail(0,0)
     for i,o in enumerate(scene.opponents):
         scene.put_opponent_on_rail(o,i+1,0,25)
-    scene.mytrick()
+    hero.set_pos(parameters.HERO_POS)
+    print("caca", hero.from_init)
+    scene.put_hero_on_rail(0,0)
+##    scene.mytrick()
+    print("end main")
 
 
 

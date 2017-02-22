@@ -75,7 +75,10 @@ class Track: #store end
             xrail = x*self.railw
             for y in range(self.ny+1):
                 yrail = y*self.railh
-                path = Path3D([V3(xrail,yrail,0),V3(xrail,yrail,30)],False,color)
+                p1 = parameters.scene.relative_to_cam(V3(xrail,yrail,0))
+                p2 = parameters.scene.relative_to_cam(V3(xrail,yrail,30))
+                path = Path3D([p1,p2],False,color)
+##                path = Path3D([V3(xrail,yrail,0),V3(xrail,yrail,30)],False,color)
                 self.add_thing(path,0,self.zfinish,50)
 
     def add_thing(self, thing, frompos, topos, spacing, maxn=None):

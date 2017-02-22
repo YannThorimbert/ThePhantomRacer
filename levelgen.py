@@ -27,5 +27,3 @@ class LevelGenerator:
                 obj = random.choice(objects).get_copy()
                 obstacle.Obstacle(x,y,z,obj)
                 i += 1
-        print("obstacles:",done)
-
