@@ -25,5 +25,6 @@ class LevelGenerator:
             if (x,y,z) not in done:
                 done.add((x,y,z))
                 obj = random.choice(objects).get_copy()
-                obstacle.Obstacle(x,y,z,obj)
+                damage = 1
+                obstacle.Obstacle(damage,x,y,z,obj)
                 i += 1

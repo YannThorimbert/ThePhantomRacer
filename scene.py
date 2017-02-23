@@ -1,8 +1,9 @@
+import random
 from pygame.math import Vector3 as V3
+import pygame.gfxdraw as gfx
 import pygame
 import thorpy
-import parameters, vessel
-
+import parameters, vessel, hud, primitivemeshes
 
 class Scene:
 
@@ -22,7 +23,11 @@ class Scene:
         self.background = thorpy.get_resized_image(self.background,
                                                 (parameters.W,parameters.H//2),
                                                 type_=max)
+        self.hud = hud.HUD()
+        self.debris = []
 ##        self.background = pygame.transform.smoothscale(self.background, (parameters.W,parameters.H//2))
+        self.start_i = 5
+        self.start_delay = 10 + int(random.random()*1000)//30
 
 
     def refresh_vessels(self):
@@ -39,10 +44,15 @@ class Scene:
 ##        self.screen.fill((0,0,0))
         #
         self.track.refresh_and_draw_things(self.cam, self.light)
+        for d in self.debris:
+            d.refresh()
         for obj in self.objs:
             if obj.visible:
                 obj.refresh_and_draw(self.cam, self.light)
         #
+        self.hud.draw_life()
+        if self.start_i >= 0:
+            self.show_start()
         pygame.display.flip()
 
 
@@ -62,31 +72,65 @@ class Scene:
         elif press[pygame.K_x]:
             self.race.init_scene(Scene(self.race))
 
+    def show_start(self):
+        spacing = 50
+        r = 20
+        n = 5 #! must be equal to self.start_i
+        w = (n-1)*spacing + 2*r
+        x = (parameters.W - w) // 2
+        if self.start_i >= 0:
+            for i in range(self.start_i):
+                x += spacing
+                y = 150
+                gfx.filled_circle(self.screen,x,y,r,(60,60,60))
+                gfx.aacircle(self.screen,x,y,r,(0,0,0))
+            for i in range(n - self.start_i):
+                x += spacing
+                y = 150
+                gfx.filled_circle(self.screen,x,y,r,(255,0,0))
+                gfx.aacircle(self.screen,x,y,r,(0,0,0))
+        else:
+            for i in range(n):
+                x += spacing
+                y = 150
+                gfx.filled_circle(self.screen,x,y,r,(60,60,60))
+                gfx.aacircle(self.screen,x,y,r,(0,0,0))
+        if self.i % self.start_delay == 0:
+            self.start_i -= 1
+
+
+
     def func_time(self):
         self.i += 1
-##        if self.i%10 == 0:
-##            if self.hero.colliding_with:
-##                print(self.hero.colliding_with.id)
-##            else:
-##                print("rien")
-        self.treat_commands()
-        # dynamics
-        self.refresh_opponents()
-        self.hero.dyn.refresh()
-        self.move_hero(self.hero.dyn.velocity)
-        self.hero.ia.make_choice()
-        # collisions
-        self.obstacles_collisions()
-        self.vessel_collisions()
-        self.check_finish()
-        # display
-        self.hide_useless_obstacles()
+        if self.start_i < 0:
+    ##        if self.i%10 == 0:
+    ##            if self.hero.colliding_with:
+    ##                print(self.hero.colliding_with.id)
+    ##            else:
+    ##                print("rien")
+            self.treat_commands()
+            # dynamics
+            self.refresh_opponents()
+            self.hero.dyn.refresh()
+            self.move_hero(self.hero.dyn.velocity)
+    ##        self.hero.ia.make_choice()
+            # collisions
+            self.obstacles_collisions()
+            self.vessel_collisions()
+            finisher = self.check_finish()
+            if finisher:
+                if not finisher.finished:
+                    finisher.finished = True
+                    self.ranking.append(finisher)
+            # display
+            self.hide_useless_obstacles()
         self.refresh_display()
 
     def refresh_opponents(self):
         for o in self.opponents:
             #handle opponents ia here
 ##            ia.play(o)
+            o.ia.make_choice()
             o.boost() #goes into ia
             o.dyn.refresh()
             o.move(o.dyn.velocity)
@@ -101,11 +145,6 @@ class Scene:
     def set_hero_pos(self, pos):
         delta = pos - self.hero.from_init
         self.move_hero(delta)
-
-    def mytrick(self):
-        for obj in self.cam.objs:
-            if obj is not self.hero:
-                obj.move(V3(0,parameters.HERO_POS.y,0))
 
     def put_hero_on_rail(self, railx, raily, z=0):
         pos = self.track.rails[railx,raily].get_middlepos(z)
@@ -128,14 +167,13 @@ class Scene:
 
     def check_finish(self):
         zfinish = self.track.zfinish - self.cam.from_init.z
-        winners = []
         if self.hero.box.z[1] > zfinish:
             print("HERO FINISH")
-            winners.append(self.hero)
+            return self.hero
         for o in self.opponents:
             if o.box.z[1] > zfinish:
-                winners.append(o)
                 print("OPPONENT FINISH")
+                return o
 
     def obstacles_collisions(self):
         for v in self.opponents+[self.hero]:

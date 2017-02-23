@@ -15,6 +15,7 @@ from scene import Scene
 from race import Race
 import levelgen
 
+
 #be careful:
 #   cam need to know all!!!! (for moving objects)
 
@@ -23,32 +24,26 @@ import levelgen
 ##OverflowError: signed short integer is greater than maximum
 #       ==> si continue, faire comme pour Object3D avec control des val abs
 
-
 #voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)
 
-4.
-#IA
+0.
+#course complete: classement de fin et abandon si life < 0
 
-4.5
-#damage collisions
+1.
+#monitoring temps cpu
 
 5.
 #meilleure levelgen
 
-6.
-#course complete
-
 7.
 #garage
-
-8.
-#monitoring temps cpu
+##  auto detect parts a partir de mesh entier !!! (coord z th la meme pour debut/fin des parties)
 
 10.
 #rotation en virage. hero_pos.z change avec la vitesse!
 
 11.
-#mod collision ==> explosions (==> parachute si le temps)
+#mod collision ==> explosions (deja fait :) ) (==> parachute si le temps)
 
 
 
@@ -133,14 +128,13 @@ def init_scene(scene): #debugging only
 ##    scene.init_cam()
     for i,o in enumerate(scene.opponents):
         scene.put_opponent_on_rail(o,i+1,0,25)
+        o.set_ia(100, 0.01)
     hero.set_pos(parameters.HERO_POS)
-    print("caca", hero.from_init)
     scene.put_hero_on_rail(0,0)
-##    scene.mytrick()
     print("end main")
     scene.refresh_vessels()
     hero.set_ia(100, 0.01)
-
+    scene.hud.refresh_attributes()
 
 
 if __name__ == "__main__":

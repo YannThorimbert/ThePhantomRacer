@@ -280,6 +280,9 @@ class Path3D:
         self.filled = False
         self.box = None
         self.edges = None
+        self.rotations = [self.rotate_around_center_x,
+                            self.rotate_around_center_y,
+                            self.rotate_around_center_z]
 
     def compute_box3D(self):
         self.box = Box3D(self)
@@ -606,6 +609,7 @@ class Object3D(Path3D):
     def set_color(self, color):
         for t in self.triangles:
             t.color = color
+        self.color = color
 
     def refresh_and_draw(self, cam, light):
         self.refresh()

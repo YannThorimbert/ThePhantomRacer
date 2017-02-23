@@ -5,7 +5,7 @@ import core3d, parameters
 
 class Obstacle:
 
-    def __init__(self, x, y, z, obj):
+    def __init__(self, damage, x, y, z, obj):
         self.railx, self.raily, self.z = x, y, z
         self.obj = obj
         parameters.scene.objs.append(obj)
@@ -14,3 +14,4 @@ class Obstacle:
         self.obj.compute_box3D()
         self.box = self.obj.box
         self.living = True
+        self.damage = damage

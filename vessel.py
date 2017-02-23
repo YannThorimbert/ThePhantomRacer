@@ -1,6 +1,6 @@
 import math
 from pygame.math import Vector3 as V3
-import core3d, parameters, ia
+import core3d, parameters, ia, destroy
 
 
 class Move:
@@ -146,6 +146,9 @@ class Vessel(core3d.Object3D):
         self.name = "no name"
         #
         self.ia = None
+        self.life = None
+        self.max_life = None
+        self.finished = False
         #
         self.id = Vessel.current_id
         Vessel.current_id += 1
@@ -189,7 +192,16 @@ class Vessel(core3d.Object3D):
     def obstacle_collision(self, obstacle):
         obstacle.obj.visible = False
         obstacle.living = False
+        self.life -= obstacle.damage
+        self.dyn.velocity.z /= 2.
 ##        parameters.scene.track.obstacles.remove(obstacle)
+        #
+        parameters.scene.debris.append(destroy.DestroyPath(obstacle.obj, self.dyn.velocity, parameters.N_DEBRIS))
+        if self.is_hero:
+            if self.life <= 0:
+                parameters.scene.debris.append(destroy.DestroyPath(self, self.dyn.velocity, 100))
+                self.visible = False
+                print("MORT")
 
     def vessel_collision(self, vessel):
         if self.dyn.velocity.x != 0:
@@ -216,6 +228,8 @@ class Vessel(core3d.Object3D):
         print("Dynamics:",self.turn,self.friction,self.mass)
         self.dyn = Dynamics(self)
         self.engine_force = self.engine.force/self.mass
+        self.life = int(self.mass * parameters.LIFE_FACTOR)
+        self.max_life = self.life
 
     def boost(self):
         if self.engine.fuel > 0:

@@ -5,7 +5,6 @@ FPS = 40
 
 MOVE_DELTA_I = 5
 VISIBILITY = 500#not used
-N_DESTROY = 20
 SPEED = 0#to be deleted
 HERO_POS = V3(0,-4,15)
 
@@ -19,6 +18,12 @@ FRICTION = 1. / 500.
 MASS = 1. / 10.
 
 OVERTAKE_SLOWER = 0.75
+LIFE_FACTOR = 10
+SPEED_HUD = 80.
+
+DEBRIS_SIZE = [1., 1.5]
+N_DEBRIS = 100
+DEBRIS_ITER = 100
 
 
 scene = None
