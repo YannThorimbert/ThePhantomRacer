@@ -336,8 +336,9 @@ class Path3D:
         points = [V3(t) for t in self.points]
         cop = Path3D(points, self.closed, V3(self.color))
         cop.from_init = V3(self.from_init)
-        if cop.edges is not None:
-            cop.edges = V3(cop.edges)
+        if self.edges is not None:
+            cop.edges = V3(self.edges)
+        cop.filled = self.filled
         return cop
 
     def set_color(self, color):
@@ -366,7 +367,6 @@ class Path3D:
 
 ##    def refresh(self):
 ##        pass
-
 
 class Area3D(Path3D):
 

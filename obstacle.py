@@ -6,7 +6,7 @@ import core3d, parameters
 class Obstacle:
 
     def __init__(self, x, y, z, obj):
-        self.x, self.y, self.z = x, y, z
+        self.railx, self.raily, self.z = x, y, z
         self.obj = obj
         parameters.scene.objs.append(obj)
         obj.set_pos(parameters.scene.track.rails[x,y].get_middlepos(z))

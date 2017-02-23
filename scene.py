@@ -18,6 +18,11 @@ class Scene:
         self.screen_rect = self.screen.get_rect().move((0,parameters.H//2))
         self.i = 0 #frame
         self.vessels = []
+        self.background = thorpy.load_image("background1.jpg")
+        self.background = thorpy.get_resized_image(self.background,
+                                                (parameters.W,parameters.H//2),
+                                                type_=max)
+##        self.background = pygame.transform.smoothscale(self.background, (parameters.W,parameters.H//2))
 
 
     def refresh_vessels(self):
@@ -28,7 +33,8 @@ class Scene:
 ##        self.objs.sort(key=lambda x:x.from_init.length(), reverse=True)
         self.objs.sort(key=lambda x:x.from_init.z, reverse=True)
         #
-        self.screen.fill((0,0,155))
+##        self.screen.fill((0,0,155))
+        self.screen.blit(self.background, (0,0))
         self.screen.fill((0,200,0),self.screen_rect)
 ##        self.screen.fill((0,0,0))
         #
@@ -68,8 +74,7 @@ class Scene:
         self.refresh_opponents()
         self.hero.dyn.refresh()
         self.move_hero(self.hero.dyn.velocity)
-##        if self.i%10 == 0:
-##            print(self.hero.dyn.velocity)
+        self.hero.ia.make_choice()
         # collisions
         self.obstacles_collisions()
         self.vessel_collisions()

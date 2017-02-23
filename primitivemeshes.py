@@ -66,6 +66,19 @@ def p_line(frompos, topos, color=(0,0,0)):
     p.filled = False
     return p
 
+def p_rectangle(a, b, color=(0,0,0), edges=None, filled=True):
+    points = [V3(0,0,0), V3(a,0,0), V3(a,b,0), V3(0,b,0)]
+    area = Path3D(points,True,color=V3(color))
+    if edges:
+        area.edges = V3(edges)
+    area.move(V3(-a/2,-b/2,0))
+    area.from_init = V3()
+    area.filled = filled
+    return area
+
+
+
+################################################################################
 
 def a_rectangle(a,b,color=(0,0,0),edges=None):
     points = [V3(0,0,0), V3(a,0,0), V3(a,b,0), V3(0,b,0)]

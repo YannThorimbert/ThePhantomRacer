@@ -1,6 +1,6 @@
 import math
 from pygame.math import Vector3 as V3
-import core3d, parameters
+import core3d, parameters, ia
 
 
 class Move:
@@ -145,8 +145,13 @@ class Vessel(core3d.Object3D):
         #
         self.name = "no name"
         #
+        self.ia = None
+        #
         self.id = Vessel.current_id
         Vessel.current_id += 1
+
+    def set_ia(self, near, spontaneous):
+        self.ia = ia.IA(self, near, spontaneous)
 
     def change_rail(self, deltax, deltay): #delta changes if not self.hero
         if deltax:

@@ -26,16 +26,6 @@ import levelgen
 
 #voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)
 
-0.
-#Area3D
-
-
-1.
-#path dessine pourtour
-
-2.
-#path with normal and handle light
-
 4.
 #IA
 
@@ -120,7 +110,8 @@ def init_scene(scene): #debugging only
     #track
     lg = levelgen.LevelGenerator(3000,3,2)
     rw,rh = parameters.RAILW,parameters.RAILH
-    possible_obstacles = [primitivemeshes.a_rectangle(0.8*rw,0.8*rh,(0,255,255),(0,0,0))]
+    possible_obstacles = [primitivemeshes.p_rectangle(0.8*rw,0.8*rh,(0,0,255),(0,0,0))]
+##    possible_obstacles = [primitivemeshes.a_rectangle(0.8*rw,0.8*rh,(0,255,255),(0,0,0))]
 ##    possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255))]
 ##    possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255)),
 ##                            primitivemeshes.cube(0.8*rw/2.,(255,0,0))]
@@ -148,6 +139,7 @@ def init_scene(scene): #debugging only
 ##    scene.mytrick()
     print("end main")
     scene.refresh_vessels()
+    hero.set_ia(100, 0.01)
 
 
 
