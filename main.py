@@ -23,14 +23,12 @@ import levelgen
 ##OverflowError: signed short integer is greater than maximum
 #       ==> si continue, faire comme pour Object3D avec control des val abs
 
-#opti: regrouper actions des opponents dans la mm boucle, + collisions!
-#rotation en virage. hero_pos.z change avec la vitesse!
+
+#voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)
 
 0.
-#probleme du decallage y
+#Area3D
 
-0.5
-#bug: collision laterale, puis plus aucune fonctionne
 
 1.
 #path dessine pourtour
@@ -53,6 +51,16 @@ import levelgen
 7.
 #garage
 
+8.
+#monitoring temps cpu
+
+10.
+#rotation en virage. hero_pos.z change avec la vitesse!
+
+11.
+#mod collision ==> explosions (==> parachute si le temps)
+
+
 
 # ##############################################################################
 #parts:
@@ -64,41 +72,24 @@ import levelgen
 #tester la forme la moins bugesque entre section ~cubique et ~triangle
 # ##############################################################################
 
-#multilights!
-#deco sur les bords sont des sources. Possedent des couleurs. Clignotent.
-#ne pas faire de rendu au-dela de visibility !
-#trier les things !!!!
-#blit visibility VS max_n_parts?
-#kill z < 0 ? Si on veut faire de beaux replay avec vue libre, il faut que le maxn du manager soit toujours egal a n.
-#tourner : conserver la norme de la vitesse (==> reduction vitesse selon z)
+#multilights ?
+
+#deco sur les bords sont des sources de lumière?. En tout cas possedent des couleurs. Clignotent.
+
+#trier les things 1 fois!!!!
 
 #opti: utiliser les dist au carre. Pygame vs math vs manuel
-#opti: angles peuvent etre precomputes. normales sont normalizees qu'une fois au tout debut
-#camera: quatre fonctions, correspondant (antialias, light)
-#chaque objet a un facteur k et blit que de 0 a k
 
+#opti: chaque objet a un facteur k et blit que de 0 a k
 
-#remettre les things devant au fur et a mesure pour perf
-
-#mouvements verticaux aussi !!!!
-
-#path3D : gfx filled polygon! ==> propriete filled
-
-#collisions spheriques au debut en tout cas? non tester box
-#nb opponents: 0, 1, 3 ?
-
-#magma: body a un attribut force, et collisions de spheres toutes simples...
-
-#FIGNOLING:
-#si collision, alors regarde quelle partie du vaisseau, puis l'enleve et dessine les parties subdivisees qui volent en eclats
-
-
+#nb opponents: 0, 1, 3 ? ==> varie
 
 def init_scene(scene): #debugging only
     parameters.scene = scene
     random.seed(3)
     parameters.scene = scene
     scene.cam = Camera(scene.screen, fov=512, d=2, objs=[])
+    scene.cam.set_aa(False)
     #
 
     light_pos = V3(0,1000,-1000)
@@ -129,7 +120,8 @@ def init_scene(scene): #debugging only
     #track
     lg = levelgen.LevelGenerator(3000,3,2)
     rw,rh = parameters.RAILW,parameters.RAILH
-    possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255))]
+    possible_obstacles = [primitivemeshes.a_rectangle(0.8*rw,0.8*rh,(0,255,255),(0,0,0))]
+##    possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255))]
 ##    possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255)),
 ##                            primitivemeshes.cube(0.8*rw/2.,(255,0,0))]
     lg.add_static_obstacles(1,possible_obstacles)
@@ -155,6 +147,7 @@ def init_scene(scene): #debugging only
     scene.put_hero_on_rail(0,0)
 ##    scene.mytrick()
     print("end main")
+    scene.refresh_vessels()
 
 
 

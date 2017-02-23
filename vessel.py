@@ -176,6 +176,8 @@ class Vessel(core3d.Object3D):
                     return True
                 elif other.box.collide(self.box):
                     return True
+                else:
+                    self.colliding_with = None
         return False
 
 

@@ -29,6 +29,7 @@ class Light:
         angle = t.n.angle_to(line)
         return angle/180.
 
+
     def set_light(self, c, f):
         """Modify color c to reflect light exposition f."""
         if f > 0.5:

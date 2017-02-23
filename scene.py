@@ -3,7 +3,6 @@ import pygame
 import thorpy
 import parameters, vessel
 
-total = 0.
 
 class Scene:
 
@@ -18,6 +17,11 @@ class Scene:
         self.screen = thorpy.get_screen()
         self.screen_rect = self.screen.get_rect().move((0,parameters.H//2))
         self.i = 0 #frame
+        self.vessels = []
+
+
+    def refresh_vessels(self):
+        self.vessels = self.opponents + [self.hero]
 
     def refresh_display(self):
         #in replay mode, sort according to length, not z!!!
@@ -55,7 +59,10 @@ class Scene:
     def func_time(self):
         self.i += 1
 ##        if self.i%10 == 0:
-##            print(self.hero.from_init)
+##            if self.hero.colliding_with:
+##                print(self.hero.colliding_with.id)
+##            else:
+##                print("rien")
         self.treat_commands()
         # dynamics
         self.refresh_opponents()
@@ -83,9 +90,6 @@ class Scene:
         self.cam.objs = self.objs + self.track.get_all_objs()
 
     def move_hero(self, delta):
-##        global total
-##        total += delta.y
-##        print("total",total)
         self.cam.move(delta)
         self.hero.set_pos(parameters.HERO_POS)
 
@@ -136,11 +140,11 @@ class Scene:
                         print(self.i,"collision",v)
                         v.obstacle_collision(o)
 
-    def vessel_collisions(self):
-        for o in self.opponents + [self.hero]: #stocker 1 fois pour toutes
-                    for o2 in self.opponents + [self.hero]:
-                        if o.should_collide(o2):
-                            vessel.collision(o,o2)
+    def vessel_collisions(self): #opti semiboucle
+        for o in self.vessels:
+            for o2 in self.vessels:
+                if o.should_collide(o2):
+                    vessel.collision(o,o2)
 
 
     def hide_useless_obstacles(self):

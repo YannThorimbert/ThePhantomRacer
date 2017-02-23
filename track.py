@@ -1,14 +1,18 @@
 from pygame.math import Vector3 as V3
 import thorpy
 import primitivemeshes
-from core3d import Path3D, Object3D, ManualObject3D
+from core3d import Path3D, Object3D, ManualObject3D, Area3D
 import parameters
 
 def get_type(thing):
     if isinstance(thing, Object3D) or isinstance(thing, ManualObject3D):
         return "o"
-    else:
+    elif isinstance(thing, Area3D):
+        raise Exception("Not implemented yet")
+    elif isinstance(thing, Path3D):
         return "p"
+    else:
+        raise Exception("Unknown type")
 
 class Rail:
 

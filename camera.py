@@ -10,26 +10,30 @@ class Camera:
         self.fov = fov
         self.d = d
         self.objs = objs
+        #
         self.aa = True
+        self.set_aa(True)
+        self.draw_object = None
+        self.draw_filled_polygon = None
+        self.draw_polygon = None
+        self.draw_path = None
+        #
+        self.from_init = V3()
+
+    def set_aa(self, aa):
+        self.aa = aa
         if self.aa:
             self.draw_object = drawing.draw_aa
             self.draw_filled_polygon = drawing.draw_filled_polygon_aa
-            self.draw_polygon = drawing.draw_polygon_aa
-##            self.draw_path = drawing.draw_lines_aa
+##            self.draw_polygon = drawing.draw_polygon_aa #bug...
+            self.draw_polygon = drawing.draw_polygon_normal
+##            self.draw_path = drawing.draw_lines_aa #too thick
             self.draw_path = drawing.draw_lines_normal
         else:
             self.draw_object = drawing.draw_normal
             self.draw_filled_polygon = drawing.draw_filled_polygon_normal
-            self.draw_polygon = drawing.draw_polygon_aa
+            self.draw_polygon = drawing.draw_polygon_normal
             self.draw_path = drawing.draw_lines_normal
-        self.from_init = V3()
-
-    def set_aa(self, aa):
-        self.aa = True
-        if self.aa:
-            self.draw_object = drawing.draw_aa
-        else:
-            self.draw_object = drawing.draw_normal
 
     def project(self, v): #perspective projection
         denom = self.d + v.z

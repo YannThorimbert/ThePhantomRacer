@@ -215,6 +215,9 @@ class Triangle:
         self.c = (self.v1 + self.v2 + self.v3)/3.
         self.d = self.c.length_squared()
 
+    def refresh_center(self):
+        self.c = (self.v1 + self.v2 + self.v3)/3.
+
     def refresh_pd(self):
         self.pd = self.d
         counter = 1
@@ -276,6 +279,7 @@ class Path3D:
         self.color = color
         self.filled = False
         self.box = None
+        self.edges = None
 
     def compute_box3D(self):
         self.box = Box3D(self)
@@ -332,6 +336,8 @@ class Path3D:
         points = [V3(t) for t in self.points]
         cop = Path3D(points, self.closed, V3(self.color))
         cop.from_init = V3(self.from_init)
+        if cop.edges is not None:
+            cop.edges = V3(cop.edges)
         return cop
 
     def set_color(self, color):
@@ -347,6 +353,8 @@ class Path3D:
             if len(p) > 2:
                 if self.filled:
                     cam.draw_filled_polygon(cam.screen, p, self.color)
+                    if self.edges is not None:
+                        cam.draw_polygon(cam.screen, p, self.edges)
                 else:
                     cam.draw_polygon(cam.screen, p, self.color)
 
@@ -358,6 +366,82 @@ class Path3D:
 
 ##    def refresh(self):
 ##        pass
+
+
+class Area3D(Path3D):
+
+    def __init__(self, points, color):
+        assert len(points) > 2
+        Path3D.__init__(self, points, True, color)
+        self.filled = True
+        self.closed = True
+        self.triangle = None
+        self.refresh_triangle()
+
+    def get_copy(self):
+        points = [V3(t) for t in self.points]
+        cop = Area3D(points, V3(self.color))
+        cop.from_init = V3(self.from_init)
+        cop.refresh_triangle()
+        if self.edges is not None:
+            cop.edges = V3(self.edges)
+        return cop
+
+    def refresh_and_draw(self, cam, light):
+        p = []
+        for t in self.points:
+            if t.z > 1 and t.z < parameters.VISIBILITY:
+                x,y = cam.project(t)
+                p.append((int(x),int(y)))
+        if len(p) > 2:
+            color = light.get_color(self.triangle)
+            cam.draw_filled_polygon(cam.screen, p, color)
+            if self.edges is not None:
+                cam.draw_polygon(cam.screen, p, self.edges)
+
+    def refresh_triangle(self):
+        self.triangle = Triangle(self.points[0],self.points[1],self.points[2],
+                                    self.color)
+        self.triangle.refresh_normal()
+        self.triangle.refresh_center()
+
+    def rotate_x(self, angle, refresh=True):
+        for v in self.points:
+            v.rotate_x_ip(angle)
+        if refresh:
+            self.refresh_triangle()
+
+    def rotate_around_center_x(self, angle, refresh=True):
+        tmp = V3(self.from_init)
+        self.move(-tmp)
+        self.rotate_x(angle, refresh)
+        self.move(tmp)
+
+    def rotate_y(self, angle, refresh=True):
+        for v in self.points:
+            v.rotate_y_ip(angle)
+        if refresh:
+            self.refresh_triangle()
+
+    def rotate_around_center_y(self, angle, refresh=True):
+        tmp = V3(self.from_init)
+        self.move(-tmp)
+        self.rotate_y(angle, refresh)
+        self.move(tmp)
+
+    def rotate_z(self, angle, refresh=True):
+        for v in self.points:
+            v.rotate_z_ip(angle)
+        if refresh:
+            self.refresh_triangle()
+
+    def rotate_around_center_z(self, angle, refresh=True):
+        tmp = V3(self.from_init)
+        self.move(-tmp)
+        self.rotate_z(angle, refresh)
+        self.move(tmp)
+
+
 
 ## #############################################################################
 class Object3D(Path3D):
@@ -471,12 +555,16 @@ class Object3D(Path3D):
             self.refresh_normals()
 
     def refresh(self):
+        #version originale
         for t in self.triangles:
             t.refresh_cd()
         for t in self.triangles:
             t.refresh_pd()
         self.triangles.sort(key=lambda x:x.pd, reverse=True)
-##        self.triangles.sort(key=lambda x:x.d,reverse=True)
+        #Version GRU
+##        for t in self.triangles:
+##            t.refresh_center()
+##        self.triangles.sort(key=lambda x:x.c.z,reverse=True)
 
     def get_vertices_set(self):
         vset = set()

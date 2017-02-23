@@ -47,4 +47,4 @@ def draw_lines_aa(screen, p, color):
     pygame.draw.aalines(screen, color, False, p)
 
 def draw_lines_normal(screen, p, color):
-    pygame.draw.lines(screen, color, False, p)
+    pygame.draw.lines(screen, color, True, p)
