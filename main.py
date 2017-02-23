@@ -26,8 +26,7 @@ import levelgen
 
 #voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)
 
-0.
-#course complete: classement de fin et abandon si life < 0
+
 
 1.
 #monitoring temps cpu
@@ -59,7 +58,7 @@ import levelgen
 
 #multilights ?
 
-#deco sur les bords sont des sources de lumière?. En tout cas possedent des couleurs. Clignotent.
+#deco sur les bords sont des sources de lumiÃ¨re?. En tout cas possedent des couleurs. Clignotent.
 
 #trier les things 1 fois!!!!
 

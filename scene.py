@@ -28,6 +28,7 @@ class Scene:
 ##        self.background = pygame.transform.smoothscale(self.background, (parameters.W,parameters.H//2))
         self.start_i = 5
         self.start_delay = 10 + int(random.random()*1000)//30
+        self.ranking = []
 
 
     def refresh_vessels(self):
@@ -119,9 +120,8 @@ class Scene:
             self.vessel_collisions()
             finisher = self.check_finish()
             if finisher:
-                if not finisher.finished:
-                    finisher.finished = True
-                    self.ranking.append(finisher)
+                finisher.finished = True
+                self.ranking.append(finisher)
             # display
             self.hide_useless_obstacles()
         self.refresh_display()
@@ -167,13 +167,11 @@ class Scene:
 
     def check_finish(self):
         zfinish = self.track.zfinish - self.cam.from_init.z
-        if self.hero.box.z[1] > zfinish:
-            print("HERO FINISH")
-            return self.hero
-        for o in self.opponents:
-            if o.box.z[1] > zfinish:
-                print("OPPONENT FINISH")
-                return o
+        for o in self.vessels:
+            if not o.finished:
+                if o.box.z[1] > zfinish:
+                    print("OPPONENT FINISH")
+                    return o
 
     def obstacles_collisions(self):
         for v in self.opponents+[self.hero]:
