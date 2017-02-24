@@ -15,3 +15,9 @@ class Obstacle:
         self.box = self.obj.box
         self.living = True
         self.damage = damage
+        #
+        self.movement = None
+        self.rotation = None
+
+    def refresh(self):
+        pass

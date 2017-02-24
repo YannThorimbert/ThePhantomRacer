@@ -15,7 +15,6 @@ class IA:
 
     def make_choice(self):
         if random.random() < self.spontaneous:
-            print("try 1")
             self.go_to_random_rail()
             return
         for o in self.track.obstacles:
@@ -23,7 +22,6 @@ class IA:
                 if o.railx == self.vessel.railx and o.raily == self.vessel.raily:
                     dist = o.box.z[0] - self.vessel.box.z[0]
                     if dist < self.near and dist > 0:
-                        print("try 2")
                         self.go_to_random_rail()
                         return
 

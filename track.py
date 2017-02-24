@@ -4,6 +4,9 @@ import primitivemeshes
 from core3d import Path3D, Object3D, ManualObject3D, Area3D
 import parameters
 
+def nothing():
+    pass
+
 def get_type(thing):
     if isinstance(thing, Object3D) or isinstance(thing, ManualObject3D):
         return "o"
@@ -73,6 +76,7 @@ class Track: #store end
         self.rails = thorpy.gamestools.basegrid.BaseGrid(nx,ny)
         for x,y in self.rails:
             self.rails[x,y] = Rail(self,x,y)
+        self.functions_things = nothing
 
     def add_visual_rails(self,color=(0,0,0)):
         for x in range(self.nx+1):
@@ -83,7 +87,8 @@ class Track: #store end
                 p2 = parameters.scene.relative_to_cam(V3(xrail,yrail,30))
                 path = Path3D([p1,p2],False,color)
 ##                path = Path3D([V3(xrail,yrail,0),V3(xrail,yrail,30)],False,color)
-                self.add_thing(path,0,self.zfinish,50)
+                self.add_thing(path,0,self.zfinish,50,10)
+
 
     def add_thing(self, thing, frompos, topos, spacing, maxn=None):
         n = (topos-frompos)//spacing
@@ -92,6 +97,7 @@ class Track: #store end
         manager = ThingManager(n, maxn, spacing)
         type_ = get_type(thing)
         actual_number_drawn = min(n,maxn)
+        copies = []
         for i in range(actual_number_drawn):
             cpy = thing.get_copy()
             cpy.move(V3(0,0,frompos+i*spacing))
@@ -100,6 +106,8 @@ class Track: #store end
                 self.things_paths.append(cpy)
             else:
                 self.things_objects.append(cpy)
+            copies.append(cpy)
+        return copies
 
     def add_thing_on_rail(self, x, y, thing, frompos, topos, spacing, maxn=None):
         thing.set_pos(parameters.scene.relative_to_cam(self.rails[x,y].get_pos(0)))
@@ -110,6 +118,8 @@ class Track: #store end
 
 
     def refresh_and_draw_things(self, cam, light):
+        self.functions_things()
+        monitor.append("a")
         #things never overlap, and can never appear in front of an object
         for thing in self.things_objects:
             if thing.visible:
@@ -125,6 +135,7 @@ class Track: #store end
                     elif thing.manager.should_continue():
                         thing.move(thing.manager.spacing_move)
                         thing.manager.increment()
+        monitor.append("b")
         for thing in self.things_paths:
             if thing.visible:
                 p = []
@@ -134,18 +145,45 @@ class Track: #store end
                         p.append((int(x),int(y)))
                         if thing.closed:
                             if len(p) > 2:
-                                if self.filled:
-                                    cam.draw_filled_polygon(cam.screen, p, self.color)
+                                if thing.filled:
+                                    cam.draw_filled_polygon(cam.screen, p, thing.color)
+                                    if thing.edges is not None:
+                                        cam.draw_polygon(cam.screen, p, thing.edges)
                                 else:
-                                    cam.draw_polygon(cam.screen, p, self.color)
+                                    cam.draw_polygon(cam.screen, p, thing.color)
                         else:
-                            if len(p) > 1:
+                            if len(p) == len(thing.points):
                                 cam.draw_path(cam.screen, p, thing.color)
                     elif thing.manager.should_continue():
                         thing.move(thing.manager.spacing_move)
                         thing.manager.increment()
+        monitor.append("c")
 
     def rail_centers(self):
         for rail in self.rails.itercells():
             yield V3(rail.middlepos)
 
+    def monitor(self):
+        monitor.show("abc")
+
+
+import time
+class Monitor:
+
+    def append(self, name):
+        if not hasattr(self, name):
+            setattr(self, name, [time.clock()])
+        else:
+            getattr(self,name).append(time.clock())
+
+    def show(self, letters):
+        tot = [0.]*len(letters)
+        L = len(getattr(self,letters[0]))
+        for i in range(1,len(letters)):
+            for k in range(L):
+                diff = getattr(self,letters[i])[k] - getattr(self,letters[i-1])[k]
+                tot[i] += diff
+        for i in range(1,len(tot)):
+            print(letters[i-1]+"->"+letters[i]+": "+str(tot[i]))
+
+monitor = Monitor()

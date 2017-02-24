@@ -75,7 +75,8 @@ class Engine(Part):
 
     def __init__(self, filename):
         Part.__init__(self, filename)
-        self.fuel = 10000
+        self.fuel = 1000
+        self.max_fuel = self.fuel
         self.force = 0.01
 
 def sign(x):
@@ -152,6 +153,11 @@ class Vessel(core3d.Object3D):
         #
         self.id = Vessel.current_id
         Vessel.current_id += 1
+        #
+        self.angle_x = 0.
+        self.angle_z = 0.
+        self.to_move_x = 0
+        self.to_move_y = 0
 
     def set_ia(self, near, spontaneous):
         self.ia = ia.IA(self, near, spontaneous)
@@ -176,6 +182,57 @@ class Vessel(core3d.Object3D):
                     self.raily += deltay
                     return True
         return False
+
+    def refresh_angle_h(self):
+        if self.angle_x == 0:
+            if self.dyn.h.delta:
+                d = abs(self.dyn.h.delta)
+                if self.to_move_x < d:
+                    self.to_move_x = d
+                value = invsign(self.dyn.velocity.x)*parameters.ANGLE_TURN
+                if d <= self.to_move_x//2:
+                    value *= -1
+                self.rotate_around_center_z(value)
+                self.angle_z += value
+            else:
+                if self.angle_z != 0:
+                    self.to_move_x = 0
+                    self.rotate_around_center_z(-self.angle_z)
+                    self.angle_z = 0
+
+    def refresh_angle_v(self):
+        if self.angle_z == 0:
+            if self.dyn.v.delta:
+                d = abs(self.dyn.v.delta)
+                if self.to_move_y < d:
+                    self.to_move_y = d
+                value = invsign(self.dyn.velocity.y)*parameters.ANGLE_TURN_V
+                if d <= self.to_move_y//2:
+                    value *= -1
+                self.rotate_around_center_x(value)
+                self.angle_x += value
+            else:
+                if self.angle_x != 0:
+                    self.to_move_y = 0
+                    self.rotate_around_center_x(-self.angle_x)
+                    self.angle_x = 0
+
+
+
+##        x = parameters.scene.track.rails[self.railx,self.raily].middlepos.x
+##        dist_center_rail = abs(x-self.from_init.x-parameters.scene.cam.from_init.x)
+##        if dist_center_rail != 0:
+##            if self.dyn.velocity.x > 0:
+##                if dist_center_rail > parameters.RAILW//2:
+##                    angle = -parameters.ANGLE_TURN
+##                else:
+##                    angle = parameters.ANGLE_TURN
+##            else:
+##                if dist_center_rail > parameters.RAILW//2:
+##                    angle = parameters.ANGLE_TURN
+##                else:
+##                    angle = -parameters.ANGLE_TURN
+##            self.rotate_around_center_z(angle)
 
     def should_collide(self, other):
         if other.id > self.id: #check self != other and forbids double-side collision
@@ -238,3 +295,7 @@ class Vessel(core3d.Object3D):
         else:
             print("no fuel")
             return 0.
+
+
+def split_in_parts(vessel):
+    pass

@@ -15,6 +15,7 @@ from scene import Scene
 from race import Race
 import levelgen
 
+#si autres bugs d'affichages : if len(p) == len(thing.points): dans draw...
 
 #be careful:
 #   cam need to know all!!!! (for moving objects)
@@ -26,10 +27,11 @@ import levelgen
 
 #voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)
 
+2.
+#obstacles rotants et mouvants
 
-
-1.
-#monitoring temps cpu
+3.
+#meilleur deco
 
 5.
 #meilleure levelgen
@@ -38,12 +40,9 @@ import levelgen
 #garage
 ##  auto detect parts a partir de mesh entier !!! (coord z th la meme pour debut/fin des parties)
 
-10.
-#rotation en virage. hero_pos.z change avec la vitesse!
 
 11.
-#mod collision ==> explosions (deja fait :) ) (==> parachute si le temps)
-
+#mode collision ==> explosions (deja fait :) ) (==> parachute si le temps)
 
 
 # ##############################################################################
@@ -68,12 +67,18 @@ import levelgen
 
 #nb opponents: 0, 1, 3 ? ==> varie
 
+#get_copy doit aussi copier frominitrot!!
+
+#things : ronds/carrees englobants. carres parterre
+
+#si temps: ralentisseurs/accele avec fleches clignotantes vertes ou rouges
+
 def init_scene(scene): #debugging only
     parameters.scene = scene
-    random.seed(3)
+    random.seed(1)
     parameters.scene = scene
     scene.cam = Camera(scene.screen, fov=512, d=2, objs=[])
-    scene.cam.set_aa(False)
+    scene.cam.set_aa(True)
     #
 
     light_pos = V3(0,1000,-1000)
@@ -91,6 +96,7 @@ def init_scene(scene): #debugging only
         v.compute_box3D()
         v.set_color(color)
         v.compute_dynamics()
+        v.from_init_rot = V3()
         return v
     hero = create_vessel(hero_color)
     hero.is_hero = True
@@ -111,8 +117,46 @@ def init_scene(scene): #debugging only
 ##                            primitivemeshes.cube(0.8*rw/2.,(255,0,0))]
     lg.add_static_obstacles(1,possible_obstacles)
     track = scene.track
+##    #
+##    track.add_visual_rails()
+##    #
+##    r,t = primitivemeshes.p_arrow(5,20,2,(255,0,0))
+##    d = 5
+##    maxn = 10
+##    r.move(V3(-d,0,0))
+##    t.move(V3(-d,0,0))
+##    r.rotate_around_center_z(90)
+##    t.rotate_around_center_z(90)
+##    r.rotate_around_center_y(90)
+##    t.rotate_around_center_y(90)
+##    cpies = []
+##    cpies += track.add_thing(r,0,1000,50,maxn)
+##    cpies += track.add_thing(t,0,1000,50,maxn)
+##    r2,t2 = r.get_copy(), t.get_copy()
+##    r2.move(V3(2*d+parameters.RAILW*track.nx,0,0))
+##    t2.move(V3(2*d+parameters.RAILW*track.nx,0,0))
+##    cpies += track.add_thing(r2,0,1000,50,maxn)
+##    cpies += track.add_thing(t2,0,1000,50,maxn)
+##    def f():
+##        g = 4*scene.i%255
+##        r = 255
+##        for c in cpies:
+##            c.set_color(V3(r,g,0))
+####        if scene.i%10 == 0:
+####            if cpies[0].color[0] != 0:
+####                for c in cpies:
+####                    c.set_color(V3(0,0,255))
+####            else:
+####                for c in cpies:
+####                    c.set_color(V3(255,0,0))
+##    track.functions_things = f
     #
-    track.add_visual_rails()
+    glob = primitivemeshes.p_rectangle(100,100,filled=False)
+    glob.move(V3(track.nx*parameters.RAILW,track.ny*parameters.RAILH,0))
+    glob.closed = False
+    track.add_thing(glob, 0, 1000, 50, maxn=10)
+    print("points",glob.points)
+    #
     finish = primitivemeshes.rectangle(track.railw,track.railh,(0,255,0))
     for pos in track.rail_centers():
         pos.z = track.zfinish
@@ -158,3 +202,106 @@ if __name__ == "__main__":
 
 
 
+##a->b: 0.01803719313101567
+##b->c: 0.0775440644732113
+##c->d: 0.7923680738645396
+##d->e: 0.08457727400051168
+##e->f: 0.014216953516080268
+##f->g: 0.004750388631215161
+##g->h: 0.01545287565724914
+##h->j: 0.0016627215518888998
+##j->k: 0.020678816337268535
+##k->l: 0.4265509432993835
+##l->m: 4.707531641103621
+##m->n: 0.8678221897204471
+##n->o: 2.3823143390489454
+##o->p: 0.1551522771544694
+##p->q: 0.4282461666100001
+##q->z: 0.0019479672502016251
+
+##    def refresh_display(self):
+##        #in replay mode, sort according to length, not z!!!
+####        self.objs.sort(key=lambda x:x.from_init.length(), reverse=True)
+##        monitor.append("j")
+##        self.objs.sort(key=lambda x:x.from_init.z, reverse=True)
+##        monitor.append("k")
+##        #
+####        self.screen.fill((0,0,155))
+##        self.screen.blit(self.background, (0,0))
+##        self.screen.fill((0,200,0),self.screen_rect)
+##        monitor.append("l")
+##        #
+##        self.track.refresh_and_draw_things(self.cam, self.light)
+##        monitor.append("m")
+##        for d in self.debris:
+##            d.refresh()
+##        monitor.append("n")
+##        for obj in self.objs:
+##            if obj.visible:
+##                obj.refresh_and_draw(self.cam, self.light)
+##        monitor.append("o")
+##        #
+##        self.hud.draw()
+##        monitor.append("p")
+##        if self.start_i >= 0:
+##            self.show_start()
+##        pygame.display.flip()
+##        monitor.append("q")
+##
+##  def func_time(self):
+##        monitor.append("a")
+##        self.start_i = -1
+##        self.i += 1
+##        if self.start_i < 0:
+##    ##        if self.i%10 == 0:
+##    ##            if self.hero.colliding_with:
+##    ##                print(self.hero.colliding_with.id)
+##    ##            else:
+##    ##                print("rien")
+##            self.treat_commands()
+##            monitor.append("b")
+##            # dynamics
+##            self.refresh_opponents()
+##            monitor.append("c")
+##            self.hero.dyn.refresh()
+##            self.move_hero(self.hero.dyn.velocity)
+##            monitor.append("d")
+##            # collisions
+##            self.obstacles_collisions()
+##            monitor.append("e")
+##            self.vessel_collisions()
+##            monitor.append("f")
+##            finisher = self.check_finish()
+##            monitor.append("g")
+##            if finisher:
+##                finisher.finished = True
+##                self.ranking.append(finisher)
+##            # display
+##            self.hide_useless_obstacles()
+##            monitor.append("h")
+##        self.refresh_display()
+##        monitor.append("z")
+##
+##    def monitor(self):
+##        monitor.show("abcdefghjklmnopqz")
+
+##import time
+##class Monitor:
+##
+##    def append(self, name):
+##        if not hasattr(self, name):
+##            setattr(self, name, [time.clock()])
+##        else:
+##            getattr(self,name).append(time.clock())
+##
+##    def show(self, letters):
+##        tot = [0.]*len(letters)
+##        L = len(getattr(self,letters[0]))
+##        for i in range(1,len(letters)):
+##            for k in range(L):
+##                diff = getattr(self,letters[i])[k] - getattr(self,letters[i-1])[k]
+##                tot[i] += diff
+##        for i in range(1,len(tot)):
+##            print(letters[i-1]+"->"+letters[i]+": "+str(tot[i]))
+##
+##monitor = Monitor()

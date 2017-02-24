@@ -5,6 +5,8 @@ import pygame
 import thorpy
 import parameters, vessel, hud, primitivemeshes
 
+
+
 class Scene:
 
     def __init__(self, race):
@@ -42,7 +44,6 @@ class Scene:
 ##        self.screen.fill((0,0,155))
         self.screen.blit(self.background, (0,0))
         self.screen.fill((0,200,0),self.screen_rect)
-##        self.screen.fill((0,0,0))
         #
         self.track.refresh_and_draw_things(self.cam, self.light)
         for d in self.debris:
@@ -51,7 +52,7 @@ class Scene:
             if obj.visible:
                 obj.refresh_and_draw(self.cam, self.light)
         #
-        self.hud.draw_life()
+        self.hud.draw()
         if self.start_i >= 0:
             self.show_start()
         pygame.display.flip()
@@ -102,6 +103,7 @@ class Scene:
 
 
     def func_time(self):
+        self.start_i = -1
         self.i += 1
         if self.start_i < 0:
     ##        if self.i%10 == 0:
@@ -114,7 +116,8 @@ class Scene:
             self.refresh_opponents()
             self.hero.dyn.refresh()
             self.move_hero(self.hero.dyn.velocity)
-    ##        self.hero.ia.make_choice()
+            self.hero.refresh_angle_h()
+            self.hero.refresh_angle_v()
             # collisions
             self.obstacles_collisions()
             self.vessel_collisions()
@@ -134,6 +137,8 @@ class Scene:
             o.boost() #goes into ia
             o.dyn.refresh()
             o.move(o.dyn.velocity)
+            o.refresh_angle_h()
+            o.refresh_angle_v()
 
     def refresh_cam(self):
         self.cam.objs = self.objs + self.track.get_all_objs()
@@ -193,6 +198,9 @@ class Scene:
             if o.living:
                 if o.box.z[0] <= self.hero.box.z[1]:
                     o.obj.visible = False
+
+    def get_current_ranking(self):
+        return sorted(self.vessels, key=lambda x:x.box.z[0], reverse=True)
 
 
 

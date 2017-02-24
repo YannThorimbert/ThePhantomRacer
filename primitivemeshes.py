@@ -37,6 +37,13 @@ class PathBuilder:
         self.path.append(self.path[-1]+(x,y,z))
 
 def p_triangle(a,filled=True,color=(0,0,0)):
+##    a = V3(a,0,0)
+##    p1 = a.rotate_z(60)
+##    p2 = p1.rotate_z(60)
+##    p3 = p1.rotate_z(60)
+##    p = Path3D([p1,p2,p3], True, color)
+##    p.filled = filled
+##    return p
     p = Path3D([V3(-a,0,0), V3(a,0), V3(0,a,0)], True, color)
     p.filled = filled
     return p
@@ -60,6 +67,14 @@ def p_arrow_line(a, b, c, color=(0,0,0)):
     p = Path3D(path.path, True, color)
     p.filled = False
     return p
+
+def p_arrow(a,b,c,color=(0,0,0)):
+    rect = p_rectangle(a,b,color)
+    triangle = Path3D([V3(2*c,b,0),V3(0,b+3*c,0),V3(-2*c,b,0)],True,color)
+    triangle.move(V3(0,-b/2,0))
+    triangle.from_init = V3()
+    triangle.filled = True
+    return rect, triangle
 
 def p_line(frompos, topos, color=(0,0,0)):
     p = Path3D([frompos, topos], False, color)

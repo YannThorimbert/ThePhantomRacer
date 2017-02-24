@@ -270,12 +270,14 @@ class Triangle:
 
 
 class Path3D:
+    obj_id = 0
 
     def __init__(self, points, closed, color):
         self.points = points #list of vectors
         self.closed = closed
         self.visible = True
         self.from_init = V3()
+        self.from_init_rot = V3()
         self.color = color
         self.filled = False
         self.box = None
@@ -283,6 +285,8 @@ class Path3D:
         self.rotations = [self.rotate_around_center_x,
                             self.rotate_around_center_y,
                             self.rotate_around_center_z]
+        self.obj_id = Path3D.obj_id
+        Path3D.obj_id += 1
 
     def compute_box3D(self):
         self.box = Box3D(self)
@@ -304,6 +308,7 @@ class Path3D:
     def rotate_x(self, angle, refresh=True):
         for v in self.points:
             v.rotate_x_ip(angle)
+        self.from_init_rot.x += angle
 
     def rotate_around_center_x(self, angle, refresh=True):
         tmp = V3(self.from_init)
@@ -314,6 +319,7 @@ class Path3D:
     def rotate_y(self, angle, refresh=True):
         for v in self.points:
             v.rotate_y_ip(angle)
+        self.from_init_rot.y += angle
 
     def rotate_around_center_y(self, angle, refresh=True):
         tmp = V3(self.from_init)
@@ -324,6 +330,7 @@ class Path3D:
     def rotate_z(self, angle, refresh=True):
         for v in self.points:
             v.rotate_z_ip(angle)
+        self.from_init_rot.x += angle
 
     def rotate_around_center_z(self, angle, refresh=True):
         tmp = V3(self.from_init)
@@ -413,6 +420,7 @@ class Area3D(Path3D):
             v.rotate_x_ip(angle)
         if refresh:
             self.refresh_triangle()
+        self.from_init_rot.x += angle
 
     def rotate_around_center_x(self, angle, refresh=True):
         tmp = V3(self.from_init)
@@ -425,6 +433,7 @@ class Area3D(Path3D):
             v.rotate_y_ip(angle)
         if refresh:
             self.refresh_triangle()
+        self.from_init_rot.x += angle
 
     def rotate_around_center_y(self, angle, refresh=True):
         tmp = V3(self.from_init)
@@ -437,6 +446,7 @@ class Area3D(Path3D):
             v.rotate_z_ip(angle)
         if refresh:
             self.refresh_triangle()
+        self.from_init_rot.x += angle
 
     def rotate_around_center_z(self, angle, refresh=True):
         tmp = V3(self.from_init)
@@ -456,6 +466,7 @@ class Object3D(Path3D):
         if more_triangles:
             self.triangles += more_triangles
         self.from_init = V3()
+        self.from_init_rot = V3()
         vset = self.get_vertices_set()
         self.vertices = {val:V3(val) for val in vset} #vertice are duplicate now
         self.compactize() #...and now they are not
@@ -498,6 +509,7 @@ class Object3D(Path3D):
             v.rotate_x_ip(angle)
         if refresh:
             self.refresh_normals()
+        self.from_init_rot.x += angle
 
     def rotate_around_center_x(self, angle, refresh=True):
         tmp = V3(self.from_init)
@@ -510,6 +522,7 @@ class Object3D(Path3D):
             v.rotate_y_ip(angle)
         if refresh:
             self.refresh_normals()
+        self.from_init_rot.x += angle
 
     def rotate_around_center_y(self, angle, refresh=True):
         tmp = V3(self.from_init)
@@ -522,6 +535,7 @@ class Object3D(Path3D):
             v.rotate_z_ip(angle)
         if refresh:
             self.refresh_normals()
+        self.from_init_rot.x += angle
 
     def rotate_around_center_z(self, angle, refresh=True):
         tmp = V3(self.from_init)
@@ -631,6 +645,7 @@ class ManualObject3D(Object3D):
     def __init__(self, triangles):
         self.triangles = triangles
         self.from_init = V3()
+        self.from_init_rot = V3()
         vset = self.get_vertices_set()
         self.vertices = {val:V3(val) for val in vset}
         self.compactize()

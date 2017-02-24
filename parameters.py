@@ -25,6 +25,8 @@ DEBRIS_SIZE = [1., 1.5]
 N_DEBRIS = 100
 DEBRIS_ITER = 100
 
+ANGLE_TURN = 1
+ANGLE_TURN_V = 1
 
 scene = None
 
