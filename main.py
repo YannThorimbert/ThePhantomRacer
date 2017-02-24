@@ -36,6 +36,9 @@ import levelgen
 5.
 #meilleure levelgen
 
+6.
+#si collision a basse vitesse, remet chacun sur un rail...
+
 7.
 #garage
 ##  auto detect parts a partir de mesh entier !!! (coord z th la meme pour debut/fin des parties)
@@ -117,45 +120,16 @@ def init_scene(scene): #debugging only
 ##                            primitivemeshes.cube(0.8*rw/2.,(255,0,0))]
     lg.add_static_obstacles(1,possible_obstacles)
     track = scene.track
-##    #
-##    track.add_visual_rails()
-##    #
-##    r,t = primitivemeshes.p_arrow(5,20,2,(255,0,0))
-##    d = 5
-##    maxn = 10
-##    r.move(V3(-d,0,0))
-##    t.move(V3(-d,0,0))
-##    r.rotate_around_center_z(90)
-##    t.rotate_around_center_z(90)
-##    r.rotate_around_center_y(90)
-##    t.rotate_around_center_y(90)
-##    cpies = []
-##    cpies += track.add_thing(r,0,1000,50,maxn)
-##    cpies += track.add_thing(t,0,1000,50,maxn)
-##    r2,t2 = r.get_copy(), t.get_copy()
-##    r2.move(V3(2*d+parameters.RAILW*track.nx,0,0))
-##    t2.move(V3(2*d+parameters.RAILW*track.nx,0,0))
-##    cpies += track.add_thing(r2,0,1000,50,maxn)
-##    cpies += track.add_thing(t2,0,1000,50,maxn)
-##    def f():
-##        g = 4*scene.i%255
-##        r = 255
-##        for c in cpies:
-##            c.set_color(V3(r,g,0))
-####        if scene.i%10 == 0:
-####            if cpies[0].color[0] != 0:
-####                for c in cpies:
-####                    c.set_color(V3(0,0,255))
-####            else:
-####                for c in cpies:
-####                    c.set_color(V3(255,0,0))
-##    track.functions_things = f
+    for o in track.obstacles:
+        if random.random() < 0.5:
+            if random.random() < 0.5:
+                o.rotation_x = random.randint(2,5)*random.randint(-1,1) #josef si 0
+            else:
+                o.rotation_y = random.randint(2,5)*random.randint(-1,1) #josef si 0
+            o.obj.set_color(parameters.COLOR_ROTATING)
     #
-    glob = primitivemeshes.p_rectangle(100,100,filled=False)
-    glob.move(V3(track.nx*parameters.RAILW,track.ny*parameters.RAILH,0))
-    glob.closed = False
-    track.add_thing(glob, 0, 1000, 50, maxn=10)
-    print("points",glob.points)
+    import trackdecorator
+    deco = trackdecorator.Decorator(track)
     #
     finish = primitivemeshes.rectangle(track.railw,track.railh,(0,255,0))
     for pos in track.rail_centers():
@@ -168,7 +142,6 @@ def init_scene(scene): #debugging only
     scene.objs += scene.opponents
     #
     scene.refresh_cam()
-##    scene.init_cam()
     for i,o in enumerate(scene.opponents):
         scene.put_opponent_on_rail(o,i+1,0,25)
         o.set_ia(100, 0.01)
@@ -186,7 +159,7 @@ if __name__ == "__main__":
     ##cam.move(V3(0,20,0))
     g = thorpy.Ghost.make()
 
-##    thorpy.application.SHOW_FPS = True
+    thorpy.application.SHOW_FPS = True
     race = Race()
     scene = Scene(race)
     race.init_scene(scene)
@@ -197,7 +170,6 @@ if __name__ == "__main__":
     thorpy.functions.playing(30,1000//parameters.FPS)
     m = thorpy.Menu(g,fps=parameters.FPS)
     m.play()
-
     app.quit()
 
 
@@ -284,24 +256,3 @@ if __name__ == "__main__":
 ##
 ##    def monitor(self):
 ##        monitor.show("abcdefghjklmnopqz")
-
-##import time
-##class Monitor:
-##
-##    def append(self, name):
-##        if not hasattr(self, name):
-##            setattr(self, name, [time.clock()])
-##        else:
-##            getattr(self,name).append(time.clock())
-##
-##    def show(self, letters):
-##        tot = [0.]*len(letters)
-##        L = len(getattr(self,letters[0]))
-##        for i in range(1,len(letters)):
-##            for k in range(L):
-##                diff = getattr(self,letters[i])[k] - getattr(self,letters[i-1])[k]
-##                tot[i] += diff
-##        for i in range(1,len(tot)):
-##            print(letters[i-1]+"->"+letters[i]+": "+str(tot[i]))
-##
-##monitor = Monitor()

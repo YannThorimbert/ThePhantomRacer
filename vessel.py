@@ -75,7 +75,7 @@ class Engine(Part):
 
     def __init__(self, filename):
         Part.__init__(self, filename)
-        self.fuel = 1000
+        self.fuel = 1500
         self.max_fuel = self.fuel
         self.force = 0.01
 

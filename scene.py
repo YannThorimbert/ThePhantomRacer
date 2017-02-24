@@ -119,6 +119,8 @@ class Scene:
             self.hero.refresh_angle_h()
             self.hero.refresh_angle_v()
             # collisions
+            for o in self.track.obstacles:
+                o.refresh()
             self.obstacles_collisions()
             self.vessel_collisions()
             finisher = self.check_finish()

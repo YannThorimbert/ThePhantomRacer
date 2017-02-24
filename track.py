@@ -84,10 +84,12 @@ class Track: #store end
             for y in range(self.ny+1):
                 yrail = y*self.railh
                 p1 = parameters.scene.relative_to_cam(V3(xrail,yrail,0))
-                p2 = parameters.scene.relative_to_cam(V3(xrail,yrail,30))
+                p2 = parameters.scene.relative_to_cam(V3(xrail,yrail,
+                                                    parameters.VISURAIL_LENGTH))
                 path = Path3D([p1,p2],False,color)
 ##                path = Path3D([V3(xrail,yrail,0),V3(xrail,yrail,30)],False,color)
-                self.add_thing(path,0,self.zfinish,50,10)
+                self.add_thing(path,0,self.zfinish,parameters.VISURAIL_SPACE,
+                                    parameters.VISURAIL_NMAX)
 
 
     def add_thing(self, thing, frompos, topos, spacing, maxn=None):
@@ -119,7 +121,6 @@ class Track: #store end
 
     def refresh_and_draw_things(self, cam, light):
         self.functions_things()
-        monitor.append("a")
         #things never overlap, and can never appear in front of an object
         for thing in self.things_objects:
             if thing.visible:
@@ -135,7 +136,6 @@ class Track: #store end
                     elif thing.manager.should_continue():
                         thing.move(thing.manager.spacing_move)
                         thing.manager.increment()
-        monitor.append("b")
         for thing in self.things_paths:
             if thing.visible:
                 p = []
@@ -144,7 +144,7 @@ class Track: #store end
                         x,y = cam.project(t)
                         p.append((int(x),int(y)))
                         if thing.closed:
-                            if len(p) > 2:
+                            if len(p) == len(thing.points):
                                 if thing.filled:
                                     cam.draw_filled_polygon(cam.screen, p, thing.color)
                                     if thing.edges is not None:
@@ -157,7 +157,6 @@ class Track: #store end
                     elif thing.manager.should_continue():
                         thing.move(thing.manager.spacing_move)
                         thing.manager.increment()
-        monitor.append("c")
 
     def rail_centers(self):
         for rail in self.rails.itercells():

@@ -17,7 +17,11 @@ class Obstacle:
         self.damage = damage
         #
         self.movement = None
-        self.rotation = None
+        self.rotation_x = None
+        self.rotation_y = None
 
     def refresh(self):
-        pass
+        if self.rotation_x:
+            self.obj.rotate_around_center_x(self.rotation_x)
+        elif self.rotation_y:
+            self.obj.rotate_around_center_y(self.rotation_y)
