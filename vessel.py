@@ -76,7 +76,7 @@ class Engine(Part):
 
     def __init__(self, filename):
         Part.__init__(self, filename)
-        self.fuel = 1500
+        self.fuel = 10000
         self.max_fuel = self.fuel
         self.force = 0.01
 
@@ -160,6 +160,11 @@ class Vessel(core3d.Object3D):
         self.to_move_x = 0
         self.to_move_y = 0
 
+    def attach_to_player(self, player):
+        self.set_color(player.color)
+        self.player = player
+        player.vessel = self
+
     def set_ia(self, near, spontaneous):
         self.ia = ia.IA(self, near, spontaneous)
 
@@ -195,7 +200,7 @@ class Vessel(core3d.Object3D):
                     value *= -1
                 self.rotate_around_center_z(value)
                 self.angle_z += value
-            else:
+            else: #reset to 0
                 if self.angle_z != 0:
                     self.to_move_x = 0
                     self.rotate_around_center_z(-self.angle_z)
@@ -255,12 +260,11 @@ class Vessel(core3d.Object3D):
 ##        parameters.scene.track.obstacles.remove(obstacle)
         #
         parameters.scene.debris.append(destroy.DestroyPath(obstacle.obj, self.dyn.velocity, parameters.N_DEBRIS))
-        if self.is_hero:
-            if self.life <= 0:
-                parameters.scene.debris.append(destroy.DestroyPath(self, self.dyn.velocity, 100))
-                self.visible = False
-                print("MORT")
-                thorpy.functions.quit_menu_func()
+##        if self.is_hero:
+##            if self.life <= 0:
+##                parameters.scene.debris.append(destroy.DestroyPath(self, self.dyn.velocity, 100))
+##                self.visible = False
+##                print("DEAD")
 
     def vessel_collision(self, vessel):
         if random.random() < 0.5:
@@ -298,7 +302,6 @@ class Vessel(core3d.Object3D):
             self.engine.fuel -= 1
             self.dyn.velocity.z += self.engine_force
         else:
-            print("no fuel")
             return 0.
 
 

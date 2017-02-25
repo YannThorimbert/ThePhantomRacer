@@ -111,7 +111,7 @@ class Garage:
         self.e_bckgr.add_reaction(reaction)
         #
         self.viewport = pygame.Surface((400,400))
-        self.viewport.fill((200,200,200))
+        self.viewport_color = (200,200,200)
         self.viewport_rect = pygame.Rect((0,0),self.viewport.get_size())
         self.viewport_rect.right = parameters.W - 20
         self.viewport_rect.centery = parameters.H//2
@@ -120,7 +120,17 @@ class Garage:
         #
         #
         self.e_ok = thorpy.make_button("Done", func=thorpy.functions.quit_menu_func)
-        self.e_bckgr.add_elements([self.e_ok])
+        #
+        vw,vh = self.viewport_rect.size
+        self.e_viewport_frame = thorpy.Element()
+        painter = thorpy.painterstyle.ClassicFrame((vw+3,vh+3),
+                                                    color=self.viewport_color,
+                                                    pressed=True)
+        self.e_viewport_frame.set_painter(painter)
+        self.e_viewport_frame.finish()
+        self.e_viewport_frame.set_center(self.viewport_rect.center)
+        #
+        self.e_bckgr.add_elements([self.e_ok,self.e_viewport_frame])
 
     def refresh_parts(self):
         self.parts = [self.t, self.n, self.c, self.w[0], self.w[1]]
@@ -129,7 +139,9 @@ class Garage:
             self.triangles += p.triangles
 
     def refresh_display(self):
-        self.viewport.fill((200,200,200))
+        for p in self.parts:
+            p.rotate_around_center_y(1)
+        self.viewport.fill(self.viewport_color)
 ##        self.screen.fill((255,255,255))
 ##            p.refresh_and_draw(self.cam, self.light)
         for t in self.triangles:

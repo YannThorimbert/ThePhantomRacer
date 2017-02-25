@@ -14,6 +14,7 @@ import random
 from scene import Scene
 from race import Race
 import levelgen
+import gamelogic
 
 #si autres bugs d'affichages : if len(p) == len(thing.points): dans draw...
 
@@ -26,23 +27,18 @@ import levelgen
 #       ==> si continue, faire comme pour Object3D avec control des val abs
 #voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)
 
-1.
-#bug couleurs opponents
 
-1.5
-#si vel.x pas coherent avec angle, inverser angle
-
-7.5
-#pre-course : montre les vaisseaux et les participants avec leurs infos
-#post-course : pareil que pre, mais en classement.
-
-#----- 13h
-
-9.
+7.6
 #meilleure levelgen et decogen + generalization
 
-7.7
+7.8
 #scenar et menu
+
+7.9
+#commands help
+
+7.95
+#+ beau finish
 
 #----- 15 h
 
@@ -54,7 +50,7 @@ import levelgen
 #TESTS SANDRINE!
 #SONS
 
-
+#qqch qui montre que on accelere (mouvement cam!)
 
 
 # ##############################################################################
@@ -69,12 +65,11 @@ import levelgen
 
 #get_copy doit aussi copier from_initrot!!
 
-#si temps: ralentisseurs/accele avec fleches clignotantes vertes ou rouges
 
 def init_scene(scene): #debugging only
-    from garage import Garage
-    garage = Garage()
-    garage.play()
+##    from garage import Garage
+##    garage = Garage()
+##    garage.play()
     #
     parameters.scene = scene
     random.seed(1)
@@ -109,14 +104,10 @@ def init_scene(scene): #debugging only
     scene.hero = hero
     scene.objs.append(hero)
     #track
-    lg = levelgen.LevelGenerator(5000,3,1)
+    lg = levelgen.LevelGenerator(1000,4,1)
     rw,rh = parameters.RAILW,parameters.RAILH
     possible_obstacles = [primitivemeshes.p_rectangle(0.8*rw,0.8*rh,(0,0,255),(0,0,0))]
-##    possible_obstacles = [primitivemeshes.a_rectangle(0.8*rw,0.8*rh,(0,255,255),(0,0,0))]
-##    possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255))]
-##    possible_obstacles = [primitivemeshes.rectangle(0.8*rw,0.8*rh,(0,255,255)),
-##                            primitivemeshes.cube(0.8*rw/2.,(255,0,0))]
-    lg.add_static_obstacles(1,possible_obstacles)
+    lg.random_gen(nparts=4,objects=possible_obstacles,min_density=0.1,max_density=0.8)
     track = scene.track
     for o in track.obstacles:
         if random.random() < 0.4:
@@ -138,21 +129,27 @@ def init_scene(scene): #debugging only
                 o.obj.set_color(Material(parameters.COLOR_MOVING))
     #
     import trackdecorator
-    deco = trackdecorator.Decorator(track)
+    deco = trackdecorator.Decorator(track,track.zfinish//500)
     #
     finish = primitivemeshes.rectangle(track.railw,track.railh,(0,255,0))
     for pos in track.rail_centers():
         pos.z = track.zfinish
         finish.set_pos(pos)
-##        finish.set_color(random.choice(drawing.colors))
+        finish.set_color(Material(random.choice(drawing.colors)))
         scene.objs.append(finish.get_copy())
     scene.track = track
     scene.opponents = [create_vessel(random.choice(drawing.colors)) for i in range(2)]
     scene.objs += scene.opponents
     #
     scene.refresh_cam()
+    hero_player = gamelogic.Player("Hero",Material(hero_color))
+    hero.attach_to_player(hero_player)
+    scene.players = [hero_player]
     for i,o in enumerate(scene.opponents):
         scene.put_opponent_on_rail(o,i+1,0,25)
+        player = gamelogic.Player()
+        o.attach_to_player(player)
+        scene.players.append(player)
         o.set_ia(100, 0.01)
     hero.set_pos(parameters.HERO_POS)
     scene.put_hero_on_rail(0,0)
@@ -160,6 +157,8 @@ def init_scene(scene): #debugging only
     scene.refresh_vessels()
     hero.set_ia(100, 0.01)
     scene.hud.refresh_attributes()
+    #
+    gamelogic.ShowRanking("Start list", "Go to race", scene.players)
 
 
 if __name__ == "__main__":
@@ -179,89 +178,8 @@ if __name__ == "__main__":
     thorpy.functions.playing(30,1000//parameters.FPS)
     m = thorpy.Menu(g,fps=parameters.FPS)
     m.play()
+    gamelogic.ShowRanking("Ranking", "Go to garage",
+                            scene.get_current_ranking_players())
     app.quit()
 
 
-
-##a->b: 0.01803719313101567
-##b->c: 0.0775440644732113
-##c->d: 0.7923680738645396
-##d->e: 0.08457727400051168
-##e->f: 0.014216953516080268
-##f->g: 0.004750388631215161
-##g->h: 0.01545287565724914
-##h->j: 0.0016627215518888998
-##j->k: 0.020678816337268535
-##k->l: 0.4265509432993835
-##l->m: 4.707531641103621
-##m->n: 0.8678221897204471
-##n->o: 2.3823143390489454
-##o->p: 0.1551522771544694
-##p->q: 0.4282461666100001
-##q->z: 0.0019479672502016251
-
-##    def refresh_display(self):
-##        #in replay mode, sort according to length, not z!!!
-####        self.objs.sort(key=lambda x:x.from_init.length(), reverse=True)
-##        monitor.append("j")
-##        self.objs.sort(key=lambda x:x.from_init.z, reverse=True)
-##        monitor.append("k")
-##        #
-####        self.screen.fill((0,0,155))
-##        self.screen.blit(self.background, (0,0))
-##        self.screen.fill((0,200,0),self.screen_rect)
-##        monitor.append("l")
-##        #
-##        self.track.refresh_and_draw_things(self.cam, self.light)
-##        monitor.append("m")
-##        for d in self.debris:
-##            d.refresh()
-##        monitor.append("n")
-##        for obj in self.objs:
-##            if obj.visible:
-##                obj.refresh_and_draw(self.cam, self.light)
-##        monitor.append("o")
-##        #
-##        self.hud.draw()
-##        monitor.append("p")
-##        if self.start_i >= 0:
-##            self.show_start()
-##        pygame.display.flip()
-##        monitor.append("q")
-##
-##  def func_time(self):
-##        monitor.append("a")
-##        self.start_i = -1
-##        self.i += 1
-##        if self.start_i < 0:
-##    ##        if self.i%10 == 0:
-##    ##            if self.hero.colliding_with:
-##    ##                print(self.hero.colliding_with.id)
-##    ##            else:
-##    ##                print("rien")
-##            self.treat_commands()
-##            monitor.append("b")
-##            # dynamics
-##            self.refresh_opponents()
-##            monitor.append("c")
-##            self.hero.dyn.refresh()
-##            self.move_hero(self.hero.dyn.velocity)
-##            monitor.append("d")
-##            # collisions
-##            self.obstacles_collisions()
-##            monitor.append("e")
-##            self.vessel_collisions()
-##            monitor.append("f")
-##            finisher = self.check_finish()
-##            monitor.append("g")
-##            if finisher:
-##                finisher.finished = True
-##                self.ranking.append(finisher)
-##            # display
-##            self.hide_useless_obstacles()
-##            monitor.append("h")
-##        self.refresh_display()
-##        monitor.append("z")
-##
-##    def monitor(self):
-##        monitor.show("abcdefghjklmnopqz")

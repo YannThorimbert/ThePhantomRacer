@@ -3,7 +3,7 @@ from pygame.math import Vector3 as V3
 import pygame.gfxdraw as gfx
 import pygame
 import thorpy
-import parameters, vessel, hud, primitivemeshes
+import parameters, vessel, hud, primitivemeshes, destroy
 
 
 
@@ -31,6 +31,7 @@ class Scene:
         self.start_i = 5
         self.start_delay = 10 + int(random.random()*1000)//30
         self.ranking = []
+        self.hero_dead = None
 
 
     def refresh_vessels(self):
@@ -69,7 +70,6 @@ class Scene:
         elif press[pygame.K_DOWN]:
             self.hero.change_rail(0,-1)
         elif press[pygame.K_SPACE]:
-##            self.hero.rotate_around_center_z(1)
             self.hero.boost()
         elif press[pygame.K_x]:
             self.race.init_scene(Scene(self.race))
@@ -103,7 +103,7 @@ class Scene:
 
 
     def func_time(self):
-##        self.start_i = -1
+        self.start_i = -1
         self.i += 1
         if self.start_i < 0:
     ##        if self.i%10 == 0:
@@ -132,6 +132,17 @@ class Scene:
                     thorpy.functions.quit_menu_func()
                 elif finisher is self.hero and len(self.ranking)==1:
                     print("YOU WIN")
+                    thorpy.functions.quit_menu_func()
+            if self.hero.dyn.velocity.z < 0.1 and self.hero.engine.fuel <= 0:
+                self.hero.box.z[0] = -1000
+                thorpy.functions.quit_menu_func()
+            if self.hero.life <= 0:
+                if not self.hero_dead:
+                    self.hero_dead = self.i
+                    self.debris.append(destroy.DestroyPath(self.hero, self.hero.dyn.velocity, 200))
+                    self.hero.visible = False
+                elif self.i - self.hero_dead > 100:
+                    self.hero.box.z[0] = -1000
                     thorpy.functions.quit_menu_func()
             # display
             self.hide_useless_obstacles()
@@ -210,6 +221,8 @@ class Scene:
     def get_current_ranking(self):
         return sorted(self.vessels, key=lambda x:x.box.z[0], reverse=True)
 
+    def get_current_ranking_players(self):
+        return [v.player for v in self.get_current_ranking()]
 
 
     def get_obj_by_id(self,id_):
