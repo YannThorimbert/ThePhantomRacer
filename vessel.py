@@ -1,5 +1,6 @@
 import math
 from pygame.math import Vector3 as V3
+import thorpy
 import core3d, parameters, ia, destroy
 
 
@@ -259,6 +260,7 @@ class Vessel(core3d.Object3D):
                 parameters.scene.debris.append(destroy.DestroyPath(self, self.dyn.velocity, 100))
                 self.visible = False
                 print("MORT")
+                thorpy.functions.quit_menu_func()
 
     def vessel_collision(self, vessel):
         if random.random() < 0.5:

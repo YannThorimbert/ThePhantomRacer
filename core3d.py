@@ -192,6 +192,8 @@ class Triangle:
     def compute_normal(self):
         e1 = self.v2 - self.v1
         e2 = self.v3 - self.v1
+##        print(self.v1,self.v2,self.v3)
+##        print(e1,e2,e1.cross(e2))
 ##        e3 = self.p3 - self.p2
         n1 = e1.cross(e2)
 ##        n2 = e1.cross(e3)

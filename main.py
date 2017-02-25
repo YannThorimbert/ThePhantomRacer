@@ -26,59 +26,55 @@ import levelgen
 #       ==> si continue, faire comme pour Object3D avec control des val abs
 #voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)
 
+1.
+#bug couleurs opponents
 
-6.
-#si collision a basse vitesse, remet chacun sur un rail...
-
-7.
-#COURSE DEBUT A FIN
+1.5
+#si vel.x pas coherent avec angle, inverser angle
 
 7.5
-#pre-course et post-course
+#pre-course : montre les vaisseaux et les participants avec leurs infos
+#post-course : pareil que pre, mais en classement.
+
+#----- 13h
+
+9.
+#meilleure levelgen et decogen + generalization
 
 7.7
 #scenar et menu
 
+#----- 15 h
+
 8.
 #garage et stls
 
-9.
-#meilleure levelgen
-#mode collision ==> explosions (deja fait :) ) (==> parachute si le temps)
+#----- 18 h
+
+#TESTS SANDRINE!
+#SONS
+
+
 
 
 # ##############################################################################
 #parts:
-    #wings
-    #derive (traduction?)
-    #nose
-    #engine (tail)
-    #cockpit
-#tester la forme la moins bugesque entre section ~cubique et ~triangle
+    #wings : encore triangle
+    #derive : (traduction?) ==> direct utiliser wings avec un material sans shadow!
+    #engine : 2 types : cylindre, cube
 # ##############################################################################
 
-#multilights ?
 
-#deco sur les bords sont des sources de lumiÃ¨re?. En tout cas possedent des couleurs. Clignotent.
+#nb opponents varie
 
-#trier les things 1 fois!!!!
-
-#opti: utiliser les dist au carre. Pygame vs math vs manuel
-
-#opti: chaque objet a un facteur k et blit que de 0 a k
-
-#nb opponents: 0, 1, 3 ? ==> varie
-
-#get_copy doit aussi copier frominitrot!!
-
-#things : ronds/carrees englobants. carres parterre
+#get_copy doit aussi copier from_initrot!!
 
 #si temps: ralentisseurs/accele avec fleches clignotantes vertes ou rouges
 
 def init_scene(scene): #debugging only
-##    from garage import Garage
-##    garage = Garage()
-##    garage.play()
+    from garage import Garage
+    garage = Garage()
+    garage.play()
     #
     parameters.scene = scene
     random.seed(1)
@@ -113,7 +109,7 @@ def init_scene(scene): #debugging only
     scene.hero = hero
     scene.objs.append(hero)
     #track
-    lg = levelgen.LevelGenerator(3000,3,2)
+    lg = levelgen.LevelGenerator(5000,3,1)
     rw,rh = parameters.RAILW,parameters.RAILH
     possible_obstacles = [primitivemeshes.p_rectangle(0.8*rw,0.8*rh,(0,0,255),(0,0,0))]
 ##    possible_obstacles = [primitivemeshes.a_rectangle(0.8*rw,0.8*rh,(0,255,255),(0,0,0))]

@@ -103,7 +103,7 @@ class Scene:
 
 
     def func_time(self):
-        self.start_i = -1
+##        self.start_i = -1
         self.i += 1
         if self.start_i < 0:
     ##        if self.i%10 == 0:
@@ -127,6 +127,12 @@ class Scene:
             if finisher:
                 finisher.finished = True
                 self.ranking.append(finisher)
+                if len(self.ranking) == len(self.opponents):
+                    print("YOU LOOSE")
+                    thorpy.functions.quit_menu_func()
+                elif finisher is self.hero and len(self.ranking)==1:
+                    print("YOU WIN")
+                    thorpy.functions.quit_menu_func()
             # display
             self.hide_useless_obstacles()
         self.refresh_display()

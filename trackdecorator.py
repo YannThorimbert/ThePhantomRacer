@@ -11,8 +11,9 @@ class Decorator:
         #
         track.add_visual_rails()
         #
-        cpies = self.add_arrows(0, 0, track.zfinish)
-        cpies += self.add_arrows(1, 25, track.zfinish)
+        cpies = []
+        for i in range(track.ny):
+            cpies += self.add_arrows(i, 25*i, track.zfinish)
         #
         squares = self.add_globs_square(0, 500)
         circles = self.add_globs_circle(500, 1000)
