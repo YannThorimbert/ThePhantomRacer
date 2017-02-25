@@ -28,9 +28,6 @@ import gamelogic
 #voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)
 
 
-7.6
-#meilleure levelgen et decogen + generalization
-
 7.8
 #scenar et menu
 
@@ -67,6 +64,11 @@ import gamelogic
 
 
 def init_scene(scene): #debugging only
+    #
+    import scenario
+    scenario.launch_intro_text()
+    scenario.launch_intro_text2()
+    scenario.launch_help()
 ##    from garage import Garage
 ##    garage = Garage()
 ##    garage.play()
@@ -161,6 +163,8 @@ def init_scene(scene): #debugging only
     gamelogic.ShowRanking("Start list", "Go to race", scene.players)
 
 
+
+
 if __name__ == "__main__":
     app = thorpy.Application((parameters.W,parameters.H))
     screen = thorpy.get_screen()
@@ -174,6 +178,12 @@ if __name__ == "__main__":
     reac = thorpy.ConstantReaction(thorpy.THORPY_EVENT,scene.func_time,
                                     {"id":thorpy.constants.EVENT_TIME})
     g.add_reaction(reac)
+
+##    background = thorpy.load_image("PaulinaRiva.png")
+##    background = thorpy.get_resized_image(background,
+##                                                (parameters.W,parameters.H//2),
+##                                                type_=max)
+    thorpy.get_screen().blit(background)
 
     thorpy.functions.playing(30,1000//parameters.FPS)
     m = thorpy.Menu(g,fps=parameters.FPS)
