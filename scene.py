@@ -206,3 +206,7 @@ class Scene:
 
 
 
+    def get_obj_by_id(self,id_):
+        for o in self.cam.objs + self.track.obstacles:
+            if o.obj_id == id_:
+                return o

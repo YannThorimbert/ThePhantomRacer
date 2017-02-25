@@ -19,6 +19,7 @@ class Camera:
         self.draw_path = None
         #
         self.from_init = V3()
+        self.set_aa(True)
 
     def set_aa(self, aa):
         self.aa = aa

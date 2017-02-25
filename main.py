@@ -4,7 +4,7 @@ import pygame
 import thorpy
 ##from stlreader import Object3D #core3d vs stlreader ==> core un CHOUILLA mieux
 from core3d import Object3D, Path3D
-from light import Light
+from light import Light, Material
 from camera import Camera
 import primitivemeshes
 import parameters
@@ -24,27 +24,26 @@ import levelgen
 
 ##OverflowError: signed short integer is greater than maximum
 #       ==> si continue, faire comme pour Object3D avec control des val abs
-
 #voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)
 
-2.
-#obstacles rotants et mouvants
-
-3.
-#meilleur deco
-
-5.
-#meilleure levelgen
 
 6.
 #si collision a basse vitesse, remet chacun sur un rail...
 
 7.
-#garage
-##  auto detect parts a partir de mesh entier !!! (coord z th la meme pour debut/fin des parties)
+#COURSE DEBUT A FIN
 
+7.5
+#pre-course et post-course
 
-11.
+7.7
+#scenar et menu
+
+8.
+#garage et stls
+
+9.
+#meilleure levelgen
 #mode collision ==> explosions (deja fait :) ) (==> parachute si le temps)
 
 
@@ -77,27 +76,30 @@ import levelgen
 #si temps: ralentisseurs/accele avec fleches clignotantes vertes ou rouges
 
 def init_scene(scene): #debugging only
+##    from garage import Garage
+##    garage = Garage()
+##    garage.play()
+    #
     parameters.scene = scene
     random.seed(1)
     parameters.scene = scene
     scene.cam = Camera(scene.screen, fov=512, d=2, objs=[])
     scene.cam.set_aa(True)
     #
-
     light_pos = V3(0,1000,-1000)
     light_m = V3(20,20,20)
     light_M = V3(200,200,200)
     light = Light(light_pos, light_m, light_M)
     scene.light = light
     #hero
-    hero_color = V3(70,70,255)
+    hero_color = (70,70,255)
     def wings(a,b,color):
         return primitivemeshes.rectangle(a,b,color).triangles
     def create_vessel(color):
         v = vessel.Vessel("f5.stl",more_triangles=wings(5,1,color))
         v.rotate_around_center_x(-90)
         v.compute_box3D()
-        v.set_color(color)
+        v.set_color(Material(color))
         v.compute_dynamics()
         v.from_init_rot = V3()
         return v
@@ -121,12 +123,23 @@ def init_scene(scene): #debugging only
     lg.add_static_obstacles(1,possible_obstacles)
     track = scene.track
     for o in track.obstacles:
-        if random.random() < 0.5:
+        if random.random() < 0.4:
             if random.random() < 0.5:
-                o.rotation_x = random.randint(2,5)*random.randint(-1,1) #josef si 0
+                o.rotation_x = random.randint(2,5)* (2*random.randint(0,1) - 1)
             else:
-                o.rotation_y = random.randint(2,5)*random.randint(-1,1) #josef si 0
-            o.obj.set_color(parameters.COLOR_ROTATING)
+                o.rotation_y = random.randint(2,5)* (2*random.randint(0,1) - 1)
+            o.obj.set_color(Material(parameters.COLOR_ROTATING))
+        if random.random() < 1.:
+            r = random.random()
+            if r < 0.2:
+                o.movement_x = 1
+            elif r < 0.4:
+                o.movement_y = 1
+            elif r < 0.5:
+                o.movement_x = 1
+                o.movement_y = 1
+            if o.movement_x or o.movement_y:
+                o.obj.set_color(Material(parameters.COLOR_MOVING))
     #
     import trackdecorator
     deco = trackdecorator.Decorator(track)
@@ -135,7 +148,7 @@ def init_scene(scene): #debugging only
     for pos in track.rail_centers():
         pos.z = track.zfinish
         finish.set_pos(pos)
-        finish.set_color(random.choice(drawing.colors))
+##        finish.set_color(random.choice(drawing.colors))
         scene.objs.append(finish.get_copy())
     scene.track = track
     scene.opponents = [create_vessel(random.choice(drawing.colors)) for i in range(2)]
@@ -159,7 +172,7 @@ if __name__ == "__main__":
     ##cam.move(V3(0,20,0))
     g = thorpy.Ghost.make()
 
-    thorpy.application.SHOW_FPS = True
+##    thorpy.application.SHOW_FPS = True
     race = Race()
     scene = Scene(race)
     race.init_scene(scene)

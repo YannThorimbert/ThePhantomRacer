@@ -2,7 +2,7 @@ from pygame.math import Vector3 as V3
 import math
 import random
 import parameters
-
+from light import Material
 
 
 def get_splitted_triangles(triangles, k, threshold):
@@ -141,8 +141,9 @@ class Triangle:
         self.c = None
         self.color = color
         if color is None:
-            self.color = V3(random.randint(0,255),random.randint(0,255),random.randint(0,255))
-        self.ecolor = self.color
+##            self.color = V3(random.randint(0,255),random.randint(0,255),random.randint(0,255))
+            rand = (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+            self.color = Material(rand)
         self.neighs = []
         self.pd = None
 
@@ -167,10 +168,9 @@ class Triangle:
         self.v3.rotate_z_ip(angle)
 
     def copy(self):
-        t = Triangle(V3(self.v1), V3(self.v2), V3(self.v3), self.color)
+        t = Triangle(V3(self.v1), V3(self.v2), V3(self.v3), self.color.get_copy())
         t.n = self.n
         t.c = self.c
-        t.ecolor = self.ecolor
         t.d = self.pd
         return t
 
@@ -344,7 +344,7 @@ class Path3D:
 
     def get_copy(self):
         points = [V3(t) for t in self.points]
-        cop = Path3D(points, self.closed, V3(self.color))
+        cop = Path3D(points, self.closed, self.color.get_copy())
         cop.from_init = V3(self.from_init)
         if self.edges is not None:
             cop.edges = V3(self.edges)
@@ -363,11 +363,11 @@ class Path3D:
         if self.closed:
             if len(p) > 2:
                 if self.filled:
-                    cam.draw_filled_polygon(cam.screen, p, self.color)
+                    cam.draw_filled_polygon(cam.screen, p, self.color.col)
                     if self.edges is not None:
                         cam.draw_polygon(cam.screen, p, self.edges)
                 else:
-                    cam.draw_polygon(cam.screen, p, self.color)
+                    cam.draw_polygon(cam.screen, p, self.color.col)
 
     def get_vertices(self):
         return self.points
@@ -390,7 +390,7 @@ class Area3D(Path3D):
 
     def get_copy(self):
         points = [V3(t) for t in self.points]
-        cop = Area3D(points, V3(self.color))
+        cop = Area3D(points, self.color.get_copy())
         cop.from_init = V3(self.from_init)
         cop.refresh_triangle()
         if self.edges is not None:
@@ -637,6 +637,7 @@ class Object3D(Path3D):
                     else:
                         break
                 if len(p) == 3:
+##                    print(self.id, self.color, t.color)
                     color = light.get_color(t)
                     cam.draw_object(cam.screen, p, color)
 

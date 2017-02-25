@@ -261,6 +261,9 @@ class Vessel(core3d.Object3D):
                 print("MORT")
 
     def vessel_collision(self, vessel):
+        if random.random() < 0.5:
+            vessel.change_rail(2*random.randint(0,1) - 1,
+                                2*random.randint(0,1) - 1)
         if self.dyn.velocity.x != 0:
             self.dyn.velocity.x *= -10
         elif self.dyn.velocity.y != 0:

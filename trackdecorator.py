@@ -1,7 +1,7 @@
 from pygame.math import Vector3 as V3
 
 import primitivemeshes, parameters
-
+from light import Material
 
 class Decorator:
 
@@ -20,6 +20,9 @@ class Decorator:
         #
         self.color_sign = 5
         self.color = 1
+        self.material = Material((255,0,0))
+        for c in cpies:
+            c.set_color(self.material)
         def f():
             self.color += self.color_sign
             if self.color >= 255:
@@ -29,7 +32,10 @@ class Decorator:
                 self.color = 0
                 self.color_sign *= -1
             for c in cpies:
-                c.set_color(V3(255,self.color,0))
+##                c.set_color(Material(255,self.color,0))
+                self.material.col[1] = self.color
+                self.material.m[1] = self.color / 0.2
+                self.material.M[1] = min(self.color*1.1 + 100,255)
 ##                c.rotate_around_center_z(1)
 ##                c.move(V3(0,0,-1))
             for g in circles:

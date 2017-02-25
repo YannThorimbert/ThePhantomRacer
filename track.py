@@ -3,6 +3,7 @@ import thorpy
 import primitivemeshes
 from core3d import Path3D, Object3D, ManualObject3D, Area3D
 import parameters
+from light import Material
 
 def nothing():
     pass
@@ -86,7 +87,7 @@ class Track: #store end
                 p1 = parameters.scene.relative_to_cam(V3(xrail,yrail,0))
                 p2 = parameters.scene.relative_to_cam(V3(xrail,yrail,
                                                     parameters.VISURAIL_LENGTH))
-                path = Path3D([p1,p2],False,color)
+                path = Path3D([p1,p2],False,Material(color))
 ##                path = Path3D([V3(xrail,yrail,0),V3(xrail,yrail,30)],False,color)
                 self.add_thing(path,0,self.zfinish,parameters.VISURAIL_SPACE,
                                     parameters.VISURAIL_NMAX)
@@ -146,14 +147,14 @@ class Track: #store end
                         if thing.closed:
                             if len(p) == len(thing.points):
                                 if thing.filled:
-                                    cam.draw_filled_polygon(cam.screen, p, thing.color)
+                                    cam.draw_filled_polygon(cam.screen, p, thing.color.col)
                                     if thing.edges is not None:
                                         cam.draw_polygon(cam.screen, p, thing.edges)
                                 else:
-                                    cam.draw_polygon(cam.screen, p, thing.color)
+                                    cam.draw_polygon(cam.screen, p, thing.color.col)
                         else:
                             if len(p) == len(thing.points):
-                                cam.draw_path(cam.screen, p, thing.color)
+                                cam.draw_path(cam.screen, p, thing.color.col)
                     elif thing.manager.should_continue():
                         thing.move(thing.manager.spacing_move)
                         thing.manager.increment()

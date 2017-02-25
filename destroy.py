@@ -45,8 +45,9 @@ class DestroyPath: #doesnt work with Path3D
             parameters.scene.debris.remove(self)
         for i,d in enumerate(self.debris):
             vel = d.physics.vel
-            d.move(vel)
-            vel -= 0.001*vel
+            d.move(vel-parameters.scene.hero.dyn.velocity)
+##            vel -= 0.1*vel
+            vel *= 0.9
             d.rotations[self.rotations[i]](d.physics.rot)
             d.refresh_and_draw(self.cam, self.light)
         self.i += 1

@@ -6,7 +6,7 @@ import parameters
 class LifeBar(thorpy.Element):
 
     def __init__(self, text, color=(255,165,0), text_color=(0,0,0),
-                    size=(200,30)):
+                    size=(200,30), font_size=None):
         thorpy.Element.__init__(self)
         painter = thorpy.painterstyle.ClassicFrame(size,
                                                     color=thorpy.style.DEF_COLOR,
@@ -14,7 +14,7 @@ class LifeBar(thorpy.Element):
         self.set_painter(painter)
         self.finish()
         #
-        self.life_text = thorpy.make_text(text,font_color=text_color)
+        self.life_text = thorpy.make_text(text,font_color=text_color,font_size=font_size)
         self.life_text.center(element=self)
         self.life_color = color
         self.add_elements([self.life_text])
@@ -61,7 +61,8 @@ class HUD:
         self.e_speed.stick_to("screen","right","right",False)
         self.e_speed.move((-50,5))
         #
-        self.e_fuel = LifeBar("Fuel")
+        self.e_fuel = LifeBar("Fuel",text_color=(255,0,0),
+                                font_size=thorpy.style.FONT_SIZE+8)
         self.e_fuel.stick_to("screen","top","top")
         #
         self.e_pos = thorpy.make_text("Xth position",
