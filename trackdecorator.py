@@ -13,11 +13,9 @@ class Decorator:
         track.add_visual_rails()
         #
         arot, acol, amov = self.random_gen_arrows(nparts)
-##        arrows = []
-##        for i in range(track.ny):
-##            arrows += self.add_arrows(i, 25*i, track.zfinish)
         #
         rotating, coloring = self.random_gen_globs(nparts)
+        #
         #
         self.color_sign = 5
         self.color = 1
@@ -52,6 +50,7 @@ class Decorator:
                 self.material2.M[1] = min(self.color*1.1 + 100,255)
         track.functions_things = f
 
+
     def add_arrows(self, raily, frompos, topos, maxn=10, d=5, spacing=60,
                              bothsides=True):
         y = self.track.rails[0,raily].middlepos.y
@@ -84,9 +83,9 @@ class Decorator:
         globs = self.track.add_thing(glob, frompos, topos, spacing, maxn)
         return globs
 
-    def add_globs_circle(self, frompos, topos, n=10, spacing=60, maxn=10):
+    def add_globs_circle(self, frompos, topos, n=10, spacing=60, maxn=10, dr=0):
         radius = max(self.track.nx*parameters.RAILW,
-                        self.track.ny*parameters.RAILH)
+                        self.track.ny*parameters.RAILH) + dr
         radius *= 1.5
         glob = primitivemeshes.p_disk(radius/2, False, n=n)
         glob.move(V3(self.track.nx*parameters.RAILW//2,
@@ -105,10 +104,10 @@ class Decorator:
             spacing = random.randint(30,100)
             square = False
             if random.random()<0.5:
-                added = self.add_globs_circle(i*zpart,(i+1)*zpart, spacing)
+                added = self.add_globs_circle(i*zpart,(i+1)*zpart, spacing=spacing)
             else:
                 square = True
-                added = self.add_globs_square(i*zpart,(i+1)*zpart, spacing)
+                added = self.add_globs_square(i*zpart,(i+1)*zpart, spacing=spacing)
             r = random.random()
             if r < 0.4:
                 if square:

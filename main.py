@@ -28,17 +28,6 @@ import gamelogic
 #voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)
 
 
-7.8
-#scenar et menu
-
-7.9
-#commands help
-
-7.95
-#+ beau finish
-
-#----- 15 h
-
 8.
 #garage et stls
 
@@ -65,10 +54,10 @@ import gamelogic
 
 def init_scene(scene): #debugging only
     #
-    import scenario
-    scenario.launch_intro_text()
-    scenario.launch_intro_text2()
-    scenario.launch_help()
+##    import scenario
+##    scenario.launch_intro_text()
+##    scenario.launch_intro_text2()
+##    scenario.launch_help()
 ##    from garage import Garage
 ##    garage = Garage()
 ##    garage.play()
@@ -106,7 +95,7 @@ def init_scene(scene): #debugging only
     scene.hero = hero
     scene.objs.append(hero)
     #track
-    lg = levelgen.LevelGenerator(1000,4,1)
+    lg = levelgen.LevelGenerator(1000,3,3)
     rw,rh = parameters.RAILW,parameters.RAILH
     possible_obstacles = [primitivemeshes.p_rectangle(0.8*rw,0.8*rh,(0,0,255),(0,0,0))]
     lg.random_gen(nparts=4,objects=possible_obstacles,min_density=0.1,max_density=0.8)
@@ -133,15 +122,46 @@ def init_scene(scene): #debugging only
     import trackdecorator
     deco = trackdecorator.Decorator(track,track.zfinish//500)
     #
-    finish = primitivemeshes.rectangle(track.railw,track.railh,(0,255,0))
-    for pos in track.rail_centers():
-        pos.z = track.zfinish
-        finish.set_pos(pos)
-        finish.set_color(Material(random.choice(drawing.colors)))
-        scene.objs.append(finish.get_copy())
+    finish = primitivemeshes.p_rectangle(track.railw,track.railh,(0,0,0))
+##    for pos in track.rail_centers():
+    for x in range(track.nx):
+        for y in range(track.ny):
+            pos = V3(track.rails[x,y].middlepos)
+            pos.z = track.zfinish+5
+            finish.set_pos(pos)
+            if x%2 == 0:
+                if y%2 == 0:
+                    color = (0,0,0)
+                else:
+                    color = (255,255,255)
+            else:
+                if y%2 == 0:
+                    color = (255,255,255)
+                else:
+                    color = (0,0,0)
+            finish.set_color(Material(random.choice(color)))
+            scene.objs.append(finish.get_copy())
     scene.track = track
     scene.opponents = [create_vessel(random.choice(drawing.colors)) for i in range(2)]
     scene.objs += scene.opponents
+    import obstacle
+    fin = Object3D("finish.stl")
+    triangles = []
+    for t in fin.triangles:
+        isok = True
+        for v in t.vertices():
+            if v.y >= 0:
+                isok = False
+        if isok:
+            triangles.append(t)
+    from core3d import ManualObject3D
+    fin = ManualObject3D(triangles)
+    fin.rotate_around_center_x(-90)
+    fin.scale(30.)
+    fin.set_color(Material((255,255,0)))
+    fin.move(V3(0,20,track.zfinish))
+##    ob = obstacle.Obstacle(0., 0, 0, 100, fin)
+    scene.objs += [fin]
     #
     scene.refresh_cam()
     hero_player = gamelogic.Player("Hero",Material(hero_color))
@@ -179,11 +199,6 @@ if __name__ == "__main__":
                                     {"id":thorpy.constants.EVENT_TIME})
     g.add_reaction(reac)
 
-##    background = thorpy.load_image("PaulinaRiva.png")
-##    background = thorpy.get_resized_image(background,
-##                                                (parameters.W,parameters.H//2),
-##                                                type_=max)
-    thorpy.get_screen().blit(background)
 
     thorpy.functions.playing(30,1000//parameters.FPS)
     m = thorpy.Menu(g,fps=parameters.FPS)
