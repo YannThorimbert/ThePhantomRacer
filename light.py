@@ -80,8 +80,8 @@ class Material:
             self.M = control_color(self.col * 1.1 + hundred)
 
     def get_copy(self):
-##        return Material(V3(self.col), V3(self.m), V3(self.M))
-        return self
+        return Material(V3(self.col), V3(self.m), V3(self.M))
+##        return self
 
     def __repr__(self):
         return "MATERIAL: "+str(self.col) + "  " + str(self.m) + "  " + str(self.M)

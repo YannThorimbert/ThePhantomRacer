@@ -290,6 +290,9 @@ class Path3D:
         self.obj_id = Path3D.obj_id
         Path3D.obj_id += 1
 
+    def reset(self):
+        self.move(-self.from_init)
+
     def compute_box3D(self):
         self.box = Box3D(self)
 
@@ -465,6 +468,7 @@ class Object3D(Path3D):
         self.filename = filename
         self.lines = get_stl_lines(filename)
         self.triangles = get_triangles(self.lines) #triangles are unique
+        self.original_triangles = list(self.triangles)
         if more_triangles:
             self.triangles += more_triangles
         self.from_init = V3()
@@ -474,6 +478,12 @@ class Object3D(Path3D):
         self.compactize() #...and now they are not
         self.visible = True
         self.box = None
+
+    def reset_from_triangles(self,triangles):
+        self.triangles = triangles
+        vset = self.get_vertices_set()
+        self.vertices = {val:V3(val) for val in vset} #vertice are duplicate now
+        self.compactize() #...and now they are not
 
     def get_vertices(self):
         return self.vertices.values()
@@ -654,3 +664,4 @@ class ManualObject3D(Object3D):
         self.compactize()
         self.visible = True
         self.box = None
+

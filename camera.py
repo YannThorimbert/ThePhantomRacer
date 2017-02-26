@@ -1,5 +1,5 @@
 from pygame.math import Vector3 as V3
-import drawing
+import drawing, parameters
 
 class Camera:
 
@@ -11,7 +11,7 @@ class Camera:
         self.d = d
         self.objs = objs
         #
-        self.aa = True
+        self.aa = parameters.AA
         self.set_aa(True)
         self.draw_object = None
         self.draw_filled_polygon = None

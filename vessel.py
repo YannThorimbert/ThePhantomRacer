@@ -18,8 +18,6 @@ class Move:
 ##        else:
 ##            raise Exception("Uknown type",type_)
 
-    def reset_i(self):
-        self.i = self.last_pressed + parameters.MOVE_DELTA_I + 1
 
     def move(self, delta, i):
         if i > self.last_pressed + parameters.MOVE_DELTA_I:
@@ -59,26 +57,27 @@ class Dynamics:
         self.velocity.y = self.v.refresh()
         self.velocity.z -= self.friction*self.velocity.z
 
-    def reset_i(self):
-        self.h.reset_i()
-        self.v.reset_i()
+    def reset(self):
+        self.velocity = V3()
+        self.h.last_pressed = 0
+        self.v.last_pressed = 0
 
 
 class Part:
 
-    def __init__(self, filename):
-##        self.obj = core3d.Object3D(filename)
+    def __init__(self, obj):
+        self.obj = obj
         self.turn = 1.
         self.friction = 1.
         self.mass = 1.
 
 class Engine(Part):
 
-    def __init__(self, filename):
-        Part.__init__(self, filename)
-        self.fuel = 10000
+    def __init__(self, obj):
+        Part.__init__(self, obj)
+        self.fuel = 2000
         self.max_fuel = self.fuel
-        self.force = 0.01
+        self.force = 0.04
 
 def sign(x):
     if x < 0:
@@ -126,7 +125,8 @@ class Vessel(core3d.Object3D):
     current_id = 0
 
     def __init__(self, filename, more_triangles=None):
-        core3d.Object3D.__init__(self,filename, more_triangles)
+        core3d.Object3D.__init__(self, filename, more_triangles)
+        import garage, light
         self.dyn = None
         self.railx = None
         self.raily = None
@@ -142,6 +142,7 @@ class Vessel(core3d.Object3D):
         self.cockpit = Part("")
         self.tail = Part("")
         self.wings = Part("")
+        self.vwings = Part("")
         self.engine = Engine("")
         self.parts = []
         #
@@ -160,8 +161,21 @@ class Vessel(core3d.Object3D):
         self.to_move_x = 0
         self.to_move_y = 0
 
-    def attach_to_player(self, player):
-        self.set_color(player.color)
+    def reset(self):
+        self.dyn.reset()
+        self.angle_x = 0.
+        self.angle_z = 0.
+        self.to_move_x = 0
+        self.to_move_y = 0
+        self.finished = False
+        self.colliding_with = None
+        self.move(-self.from_init)
+##        if parameters.player.vessel is not self:
+##            self.life = self.max_life
+
+    def attach_to_player(self, player, reset_color=False):
+        if reset_color:
+            self.set_color(player.color)
         self.player = player
         player.vessel = self
 
@@ -222,23 +236,6 @@ class Vessel(core3d.Object3D):
                     self.to_move_y = 0
                     self.rotate_around_center_x(-self.angle_x)
                     self.angle_x = 0
-
-
-
-##        x = parameters.scene.track.rails[self.railx,self.raily].middlepos.x
-##        dist_center_rail = abs(x-self.from_init.x-parameters.scene.cam.from_init.x)
-##        if dist_center_rail != 0:
-##            if self.dyn.velocity.x > 0:
-##                if dist_center_rail > parameters.RAILW//2:
-##                    angle = -parameters.ANGLE_TURN
-##                else:
-##                    angle = parameters.ANGLE_TURN
-##            else:
-##                if dist_center_rail > parameters.RAILW//2:
-##                    angle = parameters.ANGLE_TURN
-##                else:
-##                    angle = -parameters.ANGLE_TURN
-##            self.rotate_around_center_z(angle)
 
     def should_collide(self, other):
         if other.id > self.id: #check self != other and forbids double-side collision
@@ -304,6 +301,26 @@ class Vessel(core3d.Object3D):
         else:
             return 0.
 
+    def refresh_mesh(self):
+        triangles = []
+        for p in self.parts:
+            triangles += p.obj.get_copy().triangles
+        self.reset_from_triangles(triangles)
 
-def split_in_parts(vessel):
-    pass
+    def extract_tnc(self, glass_color):
+        tail, nose, cock = [], [], []
+        for t in self.triangles:
+            x = [p.x for p in t.vertices()]
+            if max(x) <= -2.:
+                tail.append(t)
+            elif min(x) >= 2.:
+                nose.append(t)
+            else:
+                cock.append(t)
+        tail = core3d.ManualObject3D(tail)
+        nose = core3d.ManualObject3D(nose)
+        cock = core3d.ManualObject3D(cock)
+        for t in cock.triangles:
+            if sum([abs(value)>1e-6 for value in t.compute_normal()]) > 1:
+                t.color = glass_color
+        return tail, nose, cock

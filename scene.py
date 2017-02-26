@@ -9,14 +9,14 @@ import parameters, vessel, hud, primitivemeshes, destroy
 
 class Scene:
 
-    def __init__(self, race):
+    def __init__(self):
+        self.players = None
         self.light = None
         self.objs = []
         self.hero = None
         self.track = None
         self.opponents = None
         self.cam = None
-        self.race = race
         self.screen = thorpy.get_screen()
         self.screen_rect = self.screen.get_rect().move((0,parameters.H//2))
         self.i = 0 #frame
@@ -32,6 +32,7 @@ class Scene:
         self.start_delay = 10 + int(random.random()*1000)//30
         self.ranking = []
         self.hero_dead = None
+        self.abandon = False
 
 
     def refresh_vessels(self):
@@ -62,17 +63,18 @@ class Scene:
     def treat_commands(self): #a unifier (facile) et utiliser dans collisions
         press = pygame.key.get_pressed()
         if press[pygame.K_RIGHT]:
-            self.hero.change_rail(1,0)
+            r=self.hero.change_rail(1,0)
         elif press[pygame.K_LEFT]:
             self.hero.change_rail(-1,0)
         if press[pygame.K_UP]:
             self.hero.change_rail(0,1)
         elif press[pygame.K_DOWN]:
             self.hero.change_rail(0,-1)
-        elif press[pygame.K_SPACE]:
+        if press[pygame.K_SPACE]:
             self.hero.boost()
-        elif press[pygame.K_x]:
-            self.race.init_scene(Scene(self.race))
+        if press[pygame.K_ESCAPE]:
+            import gamelogic
+            gamelogic.launch_options()
 
     def show_start(self):
         spacing = 50
@@ -103,14 +105,15 @@ class Scene:
 
 
     def func_time(self):
-        self.start_i = -1
+##        self.start_i = -1
         self.i += 1
         if self.start_i < 0:
-    ##        if self.i%10 == 0:
-    ##            if self.hero.colliding_with:
-    ##                print(self.hero.colliding_with.id)
-    ##            else:
-    ##                print("rien")
+##            if self.i%10 == 0:
+##                print(self.hero)
+##                if self.hero.colliding_with:
+##                    print(self.hero.colliding_with.id)
+##                else:
+##                    print("rien")
             self.treat_commands()
             # dynamics
             self.refresh_opponents()
@@ -124,13 +127,18 @@ class Scene:
             self.obstacles_collisions()
             self.vessel_collisions()
             finisher = self.check_finish()
+            if self.abandon:
+                thorpy.launch_blocking_alert("You abandoned.")
+                thorpy.functions.quit_menu_func()
             if finisher:
+                print("FINISHING:",finisher.player.name, finisher)
                 finisher.finished = True
                 self.ranking.append(finisher)
-                if len(self.ranking) == len(self.opponents):
+                if len(self.ranking) == 3:
                     print("YOU LOOSE")
+                    thorpy.launch_blocking_alert("You are the last of this race.")
                     thorpy.functions.quit_menu_func()
-                elif finisher is self.hero and len(self.ranking)==1:
+                elif finisher is self.hero:
                     print("YOU WIN")
                     thorpy.functions.quit_menu_func()
             if self.hero.dyn.velocity.z < 0.1 and self.hero.engine.fuel <= 0:
@@ -143,10 +151,15 @@ class Scene:
                     self.hero.visible = False
                 elif self.i - self.hero_dead > 100:
                     self.hero.box.z[0] = -1000
+                    thorpy.launch_blocking_alert("You completely destroyed your vessel.")
                     thorpy.functions.quit_menu_func()
             # display
             self.hide_useless_obstacles()
         self.refresh_display()
+##        for o in self.cam.objs + [o.obj for o in self.track.obstacles]:
+##            if o.obj_id == 430: #329 ??
+##                print(o, o.__class__, o.player.name)
+##                assert False
 
     def refresh_opponents(self):
         for o in self.opponents:
@@ -194,7 +207,6 @@ class Scene:
         for o in self.vessels:
             if not o.finished:
                 if o.box.z[1] > zfinish:
-                    print("OPPONENT FINISH")
                     return o
 
     def obstacles_collisions(self):

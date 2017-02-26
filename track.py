@@ -125,9 +125,10 @@ class Track: #store end
         #things never overlap, and can never appear in front of an object
         for thing in self.things_objects:
             if thing.visible:
+                print(thing.obj_id, thing.__class__)
                 thing.refresh()
                 for t in thing.triangles:
-                    if t.c.z > 0: #c denotes the center coordinate
+                    if t.c.z > 0 and t.c.z < parameters.VISIBILITY: #c denotes the center coordinate
                         p = []
                         for v in t.vertices():
                             x,y = cam.project(v)
@@ -141,7 +142,7 @@ class Track: #store end
             if thing.visible:
                 p = []
                 for t in thing.points:
-                    if t.z > 0:
+                    if t.z > 0 and t.z < parameters.VISIBILITY:
                         x,y = cam.project(t)
                         p.append((int(x),int(y)))
                         if thing.closed:
@@ -163,27 +164,27 @@ class Track: #store end
         for rail in self.rails.itercells():
             yield V3(rail.middlepos)
 
-    def monitor(self):
-        monitor.show("abc")
-
-
-import time
-class Monitor:
-
-    def append(self, name):
-        if not hasattr(self, name):
-            setattr(self, name, [time.clock()])
-        else:
-            getattr(self,name).append(time.clock())
-
-    def show(self, letters):
-        tot = [0.]*len(letters)
-        L = len(getattr(self,letters[0]))
-        for i in range(1,len(letters)):
-            for k in range(L):
-                diff = getattr(self,letters[i])[k] - getattr(self,letters[i-1])[k]
-                tot[i] += diff
-        for i in range(1,len(tot)):
-            print(letters[i-1]+"->"+letters[i]+": "+str(tot[i]))
-
-monitor = Monitor()
+##    def monitor(self):
+##        monitor.show("abc")
+##
+##
+##import time
+##class Monitor:
+##
+##    def append(self, name):
+##        if not hasattr(self, name):
+##            setattr(self, name, [time.clock()])
+##        else:
+##            getattr(self,name).append(time.clock())
+##
+##    def show(self, letters):
+##        tot = [0.]*len(letters)
+##        L = len(getattr(self,letters[0]))
+##        for i in range(1,len(letters)):
+##            for k in range(L):
+##                diff = getattr(self,letters[i])[k] - getattr(self,letters[i-1])[k]
+##                tot[i] += diff
+##        for i in range(1,len(tot)):
+##            print(letters[i-1]+"->"+letters[i]+": "+str(tot[i]))
+##
+##monitor = Monitor()

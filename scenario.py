@@ -86,6 +86,36 @@ def launch_intro_text2():
     thorpy.style.BOX_RADIUS -= 10
     launch(box)
 
+def launch_end():
+    S = parameters.W
+    screen = thorpy.get_screen()
+    title_text = "The End"
+    title = thorpy.make_text(title_text, thorpy.style.TITLE_FONT_SIZE, TCOLOR)
+    text = "You are the first of the Intergalatic Ranking."
+    end_text = "... You are free now."
+    end_text = thorpy.pack_text(400,end_text)
+    end = thorpy.make_text(end_text, thorpy.style.TITLE_FONT_SIZE, TCOLOR)
+    letter = thorpy.make_text(thorpy.pack_text(int(0.7*S),text))
+    w = letter.get_fus_rect().w + 10
+    boxletter = thorpy.Box.make([letter],(w,S//2))
+    boxletter.refresh_lift()
+    thorpy.style.BOX_RADIUS += 10
+    background = thorpy.load_image("PaulinaRiva.png")
+    background = thorpy.get_resized_image(background,
+                                                    (parameters.W,parameters.H//2),
+                                                    type_=max)
+##    background = thorpy.Background.make(image=background)
+    thorpy.get_screen().blit(background,(0,0))
+    pygame.display.flip()
+    box = thorpy.make_ok_box([title,boxletter,end],"Ok")
+    box.e_ok.user_func = thorpy.functions.quit_menu_func
+    box.e_ok.user_params = {}
+    boxletter.set_main_color((200,200,200,50))
+    box.set_main_color((200,200,255,100))
+    box.center()
+    thorpy.style.BOX_RADIUS -= 10
+    launch(box)
+
 def make_instruction(text):
     S = parameters.W
     splits = text.split(":")
@@ -95,7 +125,7 @@ def make_instruction(text):
     ecorpus = thorpy.Element.make(corpus)
     return thorpy.make_group([etitle, ecorpus])
 
-def launch_help():
+def launch_help(func=None):
     S = parameters.W
     title = thorpy.make_text("Instructions", thorpy.style.TITLE_FONT_SIZE,
                                 TCOLOR)
@@ -141,6 +171,8 @@ def launch_help():
     thorpy.get_screen().blit(background,(0,0))
     pygame.display.flip()
     launch(box)
+    if func:
+        func()
 
 
 def launch(e, func=None):
