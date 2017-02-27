@@ -4,6 +4,8 @@ import parameters
 
 TCOLOR = (255,0,0)
 
+
+
 def launch_intro_text():
     S = parameters.W
     screen = thorpy.get_screen()
@@ -183,6 +185,3 @@ def launch(e, func=None):
     m.play()
     if func:
         func()
-
-
-

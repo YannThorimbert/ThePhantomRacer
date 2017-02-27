@@ -19,6 +19,9 @@ import obstacle
 import scenario
 from core3d import ManualObject3D
 
+
+
+
 #remettre debris
 #si autres bugs d'affichages : if len(p) == len(thing.points): dans draw...
 
@@ -36,6 +39,11 @@ from core3d import ManualObject3D
 #structure de vaisseau procedural utilisant les pieces preloadees, avec class pour le materiau
 #ajouter price dans parts
 
+
+#alert/ecran WIN (avec une coupe en 3D)
+#alert quand change de categorie
+#statistics
+#vaisseau avec un trou en nez et un trou en queue
 
 
 4.
@@ -66,13 +74,11 @@ from core3d import ManualObject3D
 def create_vessel(color, model="BangDynamics"):
 ##    if not parameters.canonic_vessels:
 ##        garage.build_all_parts()
-    wings = garage.wings_free(1.3,2.5,0.2,-0.5,1.,color,5.,y=0.)
-    wings[0].rotate_around_center_x(90)
-    wings[1].rotate_around_center_x(90)
-    v = vessel.Vessel(model+".stl",more_triangles=wings[0].triangles+wings[1].triangles)
-    v.set_color(Material(color))
-    v.rotate_around_center_x(-90)
-    garage.color_glasses(v,Material((0,0,0),M=(120,120,120)))
+    glass = Material((0,0,0),M=(120,120,120))
+    rest = Material(color)
+    g = garage.generate_vessel(rest,glass)
+    w = garage.wings_free(1.3,2.5,0.2,-0.5,1.,rest,5.,y=0.)
+    v = vessel.Vessel(None,more_triangles=w[0].triangles+w[1].triangles+g.triangles)
     v.rotate_around_center_y(-90)
     v.compute_box3D()
     v.compute_dynamics()
@@ -216,27 +222,24 @@ if __name__ == "__main__":
         e_bckgr.unblit_and_reblit()
 
     def play():
-        def bru():
-            thorpy.functions.quit_menu_func()
-            e_bckgr.unblit_and_reblit()
 ##        varset = thorpy.VarSet()
 ##        varset.add("color", parameters.HERO_COLOR, "Choose vessel color:")
 ##        color = thorpy.ParamSetter.make([varset])
         name = thorpy.Inserter.make("Choose you name",value="Hero")
         box = thorpy.make_ok_box([name])
-        box.e_ok.user_func = bru
-        box.e_ok.user_params = {}
+        thorpy.auto_ok(box)
         box.center()
-        scenario.launch(box)
+##        scenario.launch(box)
+        thorpy.launch_blocking(box,e_bckgr)
         parameters.HERO_NAME = name.get_value()
 
         tit = thorpy.make_text("Choose vessel color")
         color = thorpy.ColorSetter.make("Choose vessel color")
         box = thorpy.make_ok_box([tit,color])
-        box.e_ok.user_func = bru
-        box.e_ok.user_params = {}
+        thorpy.auto_ok(box)
         box.center()
-        scenario.launch(box)
+##        scenario.launch(box)
+        thorpy.launch_blocking(box)
         parameters.HERO_COLOR = color.get_value()
         print("setting", parameters.HERO_COLOR)
         #

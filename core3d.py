@@ -24,10 +24,14 @@ def get_stl_lines(filename):
 def get_vertex(line):
     if "vertex" in line:
         line = line.split(" ")
+        while '' in line:
+            line.remove('')
         x, y, z = line[-3],line[-2],line[-1]
         return V3(float(x),float(y),float(z)), "v"
     elif "normal" in line:
         line = line.split(" ")
+        while '' in line:
+            line.remove('')
         x, y, z = line[-3],line[-2],line[-1]
         return V3(float(x),float(y),float(z)), "n"
     return False
@@ -466,9 +470,13 @@ class Object3D(Path3D):
 
     def __init__(self, filename, more_triangles=None):
         self.filename = filename
-        self.lines = get_stl_lines(filename)
-        self.triangles = get_triangles(self.lines) #triangles are unique
-        self.original_triangles = list(self.triangles)
+        if filename:
+            self.lines = get_stl_lines(filename)
+            self.triangles = get_triangles(self.lines) #triangles are unique
+            self.original_triangles = list(self.triangles)
+        else:
+            self.triangles = []
+            self.original_triangles = []
         if more_triangles:
             self.triangles += more_triangles
         self.from_init = V3()
@@ -664,4 +672,3 @@ class ManualObject3D(Object3D):
         self.compactize()
         self.visible = True
         self.box = None
-

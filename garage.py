@@ -1,3 +1,4 @@
+import random
 import pygame
 from pygame.math import Vector3 as V3
 import thorpy
@@ -24,27 +25,39 @@ def color_glasses(model, glass_color):
             t.color = glass_color
 
 
-##def cut_object(filename, color, glass_color):
-##    model = core3d.Object3D(filename)
-##    model.set_color(color)
-##    model.rotate_around_center_x(-90)
-##    model.from_init_rot = V3()
-##    tail, nose, cock = [], [], []
-##    for t in model.triangles:
-##        x = [p.x for p in t.vertices()]
-##        if max(x) <= -2.:
-##            tail.append(t)
-##        elif min(x) >= 2.:
-##            nose.append(t)
-##        else:
-##            cock.append(t)
-##    tail = core3d.ManualObject3D(tail)
-##    nose = core3d.ManualObject3D(nose)
-##    cock = core3d.ManualObject3D(cock)
-##    for t in cock.triangles:
-##        if sum([abs(value)>1e-6 for value in t.compute_normal()]) > 1:
-##            t.color = glass_color
-##    return [tail, nose, cock]
+def cut_object(filename, color, glass_color):
+   model = core3d.Object3D(filename)
+   model.set_color(color)
+   model.rotate_around_center_x(-90)
+   model.from_init_rot = V3()
+   tail, nose, cock = [], [], []
+   for t in model.triangles:
+       x = [p.x for p in t.vertices()]
+       if max(x) <= -2.:
+           tail.append(t)
+       elif min(x) >= 2.:
+           nose.append(t)
+       else:
+           cock.append(t)
+   tail = core3d.ManualObject3D(tail)
+   nose = core3d.ManualObject3D(nose)
+   cock = core3d.ManualObject3D(cock)
+   for t in cock.triangles:
+       if sum([abs(value)>1e-6 for value in t.compute_normal()]) > 1:
+           t.color = glass_color
+   return [tail, nose, cock]
+
+
+def generate_vessel(color, glass_color):
+    t = random.choice(parameters.MODELS)+".stl"
+    n = random.choice(parameters.MODELS)+".stl"
+    c = random.choice(parameters.MODELS)+".stl"
+    #
+    t =  cut_object(t,color,glass_color)[0]
+    n =  cut_object(n,color,glass_color)[1]
+    c =  cut_object(c,color,glass_color)[2]
+    return core3d.ManualObject3D(t.triangles+n.triangles+c.triangles)
+
 
 
 def wings_rect(a,b,color,x=0.,y=0.,angle=0.):
@@ -94,17 +107,17 @@ def wings_free(a,b,c,d,fleche,color,angle=0.,y=0,sym=True):
         return mesh
 
 ##import vessel
-##def build_all_parts():
-##    parameters.canonic_vessels = {}
-##    color = Material((200,200,200))
-##    glass = Material((0,0,0))
-##    files = ["Aerocrush","BangDynamics"]
-##    for f in files:
-##        parts = wings_free(1.3,3.,0.2,-0.5,1.,color,10.,y=0.)
-##        triangles = []
-##        for p in parts:
-##            triangles += p.triangles
-##        parameters.canonic_vessels[f] = vessel.Vessel(f+".stl",triangles)
+# def build_all_parts():
+#    parameters.canonic_vessels = {}
+#    color = Material((200,200,200))
+#    glass = Material((0,0,0))
+#    files = ["Aerocrush","BangDynamics"]
+#    for f in files:
+#        parts = wings_free(1.3,3.,0.2,-0.5,1.,color,10.,y=0.)
+#        triangles = []
+#        for p in parts:
+#            triangles += p.triangles
+#        parameters.canonic_vessels[f] = vessel.Vessel(f+".stl",triangles)
 
 
 def launch_rankings():

@@ -6,7 +6,8 @@ FPS = 40
 AA = True
 
 
-MODELS = ["Aerocrush","BangDynamics","CabalysticsAndCo"]
+MODELS = ["Aerocrush","BangDynamics","CabalysticsAndCo","Dropplet","Elbus",
+            "F12","GorschType","Herschel","Illuminus"]
 HERO_COLOR = (0,0,255)
 HERO_MODEL = None
 HERO_NAME = "Hero"
@@ -62,4 +63,3 @@ def flush():
         if p.vessel:
             p.vessel.reset()
     scene = None
-
