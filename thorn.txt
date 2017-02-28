@@ -1,7 +1,7 @@
 VOYP 0.4
 VOY 0
 a
-e 
+e
 i
 o
 u
@@ -39,4 +39,4 @@ l
 j
 h 0.1
 SPEC 0
-à
+a

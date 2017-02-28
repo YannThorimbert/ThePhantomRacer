@@ -4,39 +4,7 @@ import parameters
 
 TCOLOR = (255,0,0)
 
-
-class LargeTextManager:
-    """Handles font color, font size and indentation."""
-    def __init__(self, indent="    ", endpar="\n\n"):
-        self.indent = indent
-        self.endpar = endpar
-        self.paragraphs = []
-
-    def paragraph(self,*text):
-        """Add a new paragraph"""
-        if len(self.paragraphs) > 0:
-            self.end_paragraph()
-            content = self.indent
-        else:
-            content =""
-        for t in text:
-            content += t
-        self.paragraphs.append(content)
-
-    def end_paragraph(self):
-        self.paragraphs[-1] += self.endpar
-
-    def more(self, *text):
-        """Append to the current paragraph"""
-        for t in text:
-            self.paragraphs[-1] += t
-
-    def get_all(self):
-        text = ""
-        for p in self.paragraphs:
-            text += p
-        return text
-
+from thorpy.gamestools.writing import LargeTextManager
 
 t = LargeTextManager()
 t.paragraph("He raised me from the dead")
@@ -44,7 +12,7 @@ t.paragraph("I did not really want to... However, I cannot say I had no choice. 
 t.more("This would be a lie. Lies led me to death.")
 t.paragraph("For decades, I have been living ruthlessly, in the immorality, ")
 t.more("the crime and all the possible disrespect for any form of life, including mine.")
-t.paragraph("I was about to die when the mage came and suspended my last breath.")
+t.paragraph("I was about to die when the wizard came and suspended my last breath.")
 t.more("He proposed a deal. Considering my actions, I deserved the Great Void ")
 t.more("which was waiting for me, he said, altough his considerable power could")
 t.more("have saved me ; but he did not want to extend such a miserable life in this world anymore.")

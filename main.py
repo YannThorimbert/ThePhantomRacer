@@ -26,9 +26,7 @@ from core3d import ManualObject3D
 #   -background change
 #   -bruit de foule (pendant les feux) change
 
-
 #afficher chrono, gain de chacun
-#__future__ division pour LifeBar (thorpy)
 
 #stocker toutes les pieces + set pour procedural
 #structure de vaisseau procedural utilisant les pieces preloadees, avec class pour le materiau
