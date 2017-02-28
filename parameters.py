@@ -50,8 +50,10 @@ scene = None
 player = None
 players = []
 NPLAYERS = 12
+CATEGORIES = ["Intergalatic League", "International Championship", "National cup"]
 
 ZFINISH = 3000
+ENGINE_POWER = 0.03
 
 QUIT_GAME = False
 

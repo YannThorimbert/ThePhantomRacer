@@ -119,29 +119,38 @@ def wings_free(a,b,c,d,fleche,color,angle=0.,y=0,sym=True):
 #            triangles += p.triangles
 #        parameters.canonic_vessels[f] = vessel.Vessel(f+".stl",triangles)
 
-
-def launch_rankings():
+def get_rankings_box():
     elements = []
     import gamelogic
     gamelogic.refresh_ranking()
+    t1 = "    ---- "
+    t2 = " ----    "
+    fs = thorpy.style.FONT_SIZE - 2
     for i,p in enumerate(parameters.players):
         if i == 0:
-            elements.append(thorpy.make_text("-----Intergalactic category-----",font_color=(0,155,0)))
+            elements.append(thorpy.make_text(t1+parameters.CATEGORIES[0]+t2,fs,(0,155,0)))
         elif i == parameters.NPLAYERS//3:
-            elements.append(thorpy.make_text("-----International category-----",font_color=(0,155,0)))
+            elements.append(thorpy.make_text(t1+parameters.CATEGORIES[1]+t2,fs,(0,155,0)))
         elif i == 2*parameters.NPLAYERS//3:
-            elements.append(thorpy.make_text("-----National category-----",font_color=(0,155,0)))
+            elements.append(thorpy.make_text(t1+parameters.CATEGORIES[2]+t2,fs,(0,155,0)))
         if p == parameters.player:
-            elements.append(thorpy.make_text("("+str(p.points)+")  "+p.name,font_color=(255,0,0)))
+            elements.append(thorpy.make_text("("+str(p.points)+")  "+p.name,fs,(255,0,0)))
         else:
-            elements.append(thorpy.make_text("("+str(p.points)+")  "+p.name))
-
+            elements.append(thorpy.make_text("("+str(p.points)+")  "+p.name,fs,(0,0,0)))
     box = thorpy.Box.make(elements,size=(300,300))
     box.refresh_lift()
-    box2 = thorpy.make_ok_box([box])
+    return box
+
+def launch_rankings(garage):
+    box = get_rankings_box()
+##    box2 = thorpy.make_ok_box([box])
+    box2 = thorpy.dialog.make_textbox("Rankings","",elements=[box])
 ##    box.set_size((300,300))
 ##    box.refresh_lift()
-    thorpy.launch(box2)
+##    thorpy.launch(box2)
+    box2.center()
+##    thorpy.launch_blocking(box2,garage.e_bckgr)
+    thorpy.launch_nonblocking(box2,launching=garage.e_bckgr)
 
 def quit_game():
     thorpy.functions.quit_func()
@@ -203,7 +212,8 @@ class Garage:
         #
         damages = str(round(100.*(1. - self.ovessel.life/self.ovessel.max_life)))
         self.e_damage = thorpy.make_text("Vessel damages: " + damages + "%")
-        self.e_ranking = thorpy.make_button("See rankings", launch_rankings)
+        self.e_ranking = thorpy.make_button("See rankings", launch_rankings, {"garage":self})
+##        self.e_ranking = get_rankings_box()
         self.e_menu = thorpy.make_button("Stop career and die (forever)",
                                         func=quit_game)
         self.e_menu.set_main_color((255,0,0))
@@ -263,21 +273,25 @@ class Garage:
 ##        pygame.display.flip()
 
     def mousemotion(self,e):
-        if pygame.mouse.get_pressed()[0]:
-            dcx = e.pos[0] - self.viewport_rect.centerx#parameters.W//2
-            dcy = e.pos[1] - self.viewport_rect.centery#parameters.H//2
-            dist = dcx*dcx + dcy*dcy
-            k = -1.
-            #a*rotate_z + (1-a)*rotate_x = k*rel.y
-            #rotate_y = k*rel.x
-            #dist grand : a grand
-            a = dist / float(parameters.W//2)**2
-            rotate_z = a * k * e.rel[1]
-            rotate_x = (1.-a) * k * e.rel[1]
-            rotate_y = k * e.rel[0]
-            self.vessel.rotate_around_center_x(rotate_x)
-            self.vessel.rotate_around_center_y(rotate_y)
-            self.vessel.rotate_around_center_z(rotate_z)
+        if self.viewport_rect.collidepoint(pygame.mouse.get_pos()):
+            thorpy.change_cursor(thorpy.constants.CURSOR_BROKEN)
+            if pygame.mouse.get_pressed()[0]:
+                dcx = e.pos[0] - self.viewport_rect.centerx#parameters.W//2
+                dcy = e.pos[1] - self.viewport_rect.centery#parameters.H//2
+                dist = dcx*dcx + dcy*dcy
+                k = -1.
+                #a*rotate_z + (1-a)*rotate_x = k*rel.y
+                #rotate_y = k*rel.x
+                #dist grand : a grand
+                a = dist / float(parameters.W//2)**2
+                rotate_z = a * k * e.rel[1]
+                rotate_x = (1.-a) * k * e.rel[1]
+                rotate_y = k * e.rel[0]
+                self.vessel.rotate_around_center_x(rotate_x)
+                self.vessel.rotate_around_center_y(rotate_y)
+                self.vessel.rotate_around_center_z(rotate_z)
+        else:
+            thorpy.change_cursor(thorpy.constants.CURSOR_NORMAL)
 ##            self.refresh_parts()
 
     def play(self):

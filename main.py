@@ -19,21 +19,16 @@ import obstacle
 import scenario
 from core3d import ManualObject3D
 
+#pour repair et fuel, proposer d'utiliser tout l'argent si pas possible
+
+#quand change de categorie:
+#   -opponents ont 1 boost moteur.
+#   -background change
+#   -bruit de foule (pendant les feux) change
 
 
-
-#remettre debris
-#si autres bugs d'affichages : if len(p) == len(thing.points): dans draw...
-
-#be careful:
-#   cam need to know all!!!! (for moving objects)
-
-#faire un grep '#' pour checker qu'il y a pas de trucs importants qqpart
-
-##OverflowError: signed short integer is greater than maximum
-#       ==> si continue, faire comme pour Object3D avec control des val abs
-#voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)
-
+#afficher chrono, gain de chacun
+#__future__ division pour LifeBar (thorpy)
 
 #stocker toutes les pieces + set pour procedural
 #structure de vaisseau procedural utilisant les pieces preloadees, avec class pour le materiau
@@ -83,6 +78,7 @@ def create_vessel(color, model="BangDynamics"):
     v.compute_box3D()
     v.compute_dynamics()
     v.from_init_rot = V3()
+    v.color = rest
     return v
 
 def init_game():
@@ -135,7 +131,7 @@ def init_scene():
             else:
                 o.rotation_y = random.randint(2,5)* (2*random.randint(0,1) - 1)
             o.obj.set_color(Material(parameters.COLOR_ROTATING))
-        if random.random() < 1.:
+        if random.random() < 0.5:
             r = random.random()
             if r < 0.1:
                 o.movement_x = 1
@@ -211,6 +207,7 @@ def init_scene():
 
 if __name__ == "__main__":
     app = thorpy.Application((parameters.W,parameters.H))
+    thorpy.set_theme("human")
     ##    thorpy.application.SHOW_FPS = True
     screen = thorpy.get_screen()
     import dialog
@@ -225,7 +222,7 @@ if __name__ == "__main__":
 ##        varset = thorpy.VarSet()
 ##        varset.add("color", parameters.HERO_COLOR, "Choose vessel color:")
 ##        color = thorpy.ParamSetter.make([varset])
-        name = thorpy.Inserter.make("Choose you name",value="Hero")
+        name = thorpy.Inserter.make("Choose your name",value="Hero")
         box = thorpy.make_ok_box([name])
         thorpy.auto_ok(box)
         box.center()
@@ -244,9 +241,11 @@ if __name__ == "__main__":
         print("setting", parameters.HERO_COLOR)
         #
         gamelogic.ShowRanking("Choose a vessel", "Continue", [], False, True)
+        thorpy.set_theme("classic")
         scenario.launch_intro_text()
         scenario.launch_intro_text2()
         scenario.launch_help()
+        thorpy.set_theme("human")
         init_game()
         parameters.AA = vs.get_value("aa")
         parameters.VISIBILITY = vs.get_value("visibility")
@@ -264,11 +263,31 @@ if __name__ == "__main__":
             thorpy.functions.playing(30,1000//parameters.FPS)
             m = thorpy.Menu(g,fps=parameters.FPS)
             m.play()
+            gamelogic.refresh_ranking()
+            cat_before,c1 = gamelogic.get_category(parameters.player.ranking-1)
             gamelogic.ShowRanking("Ranking", "Go to garage",
                                     scene.get_current_ranking_players(),results=True)
+            gamelogic.refresh_ranking()
+            cat_after,c2 = gamelogic.get_category(parameters.player.ranking-1)
+            if c2>c1:
+                thorpy.launch_blocking_alert("Your category is now "+cat_after+\
+                    "!\nCongratulations, "+parameters.HERO_NAME+".\nYou earned an extra bonus of 500 $."+\
+                    "\n\nThe track length in this category is 1000m longer.")
+                parameters.player.money += 500
+                parameters.ZFINISH += 1000
+                parameters.ENGINE_POWER += 0.005
+            elif c2<c1:
+                thorpy.launch_blocking_alert("Your category is now "+cat_after+\
+                    "!\nThis is very deceptive, "+parameters.HERO_NAME+".\n\n"+\
+                    "The track length in this category is 1000m shorter.")
+                parameters.ZFINISH -= 1000
+                parameters.ENGINE_POWER -= 0.005
             parameters.flush()
             if parameters.player.ranking == parameters.players[0].ranking:
                 scenario.launch_end()
+            if parameters.player.vessel.life <=0:
+                parameters.player.vessel.life = 1
+                parameters.player.vessel.visible = True
 
 
     e_title = thorpy.make_text("The Phantom Racer", 25, (255,0,0))
@@ -288,5 +307,14 @@ if __name__ == "__main__":
     e_title.move((0,-50))
     m = thorpy.Menu(e_bckgr)
     m.play()
-
     app.quit()
+
+#si autres bugs d'affichages : if len(p) == len(thing.points): dans draw...
+
+#be careful:
+#   cam need to know all!!!! (for moving objects)
+
+
+##OverflowError: signed short integer is greater than maximum
+#       ==> si continue, faire comme pour Object3D avec control des val abs
+#voir si refresh() de object 3d ferait pas mieux d'utiliser version GRU (cf refresh)

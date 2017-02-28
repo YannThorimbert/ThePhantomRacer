@@ -77,7 +77,7 @@ class Engine(Part):
         Part.__init__(self, obj)
         self.fuel = 2000
         self.max_fuel = self.fuel
-        self.force = 0.04
+        self.force = parameters.ENGINE_POWER
 
 def sign(x):
     if x < 0:

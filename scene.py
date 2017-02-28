@@ -143,6 +143,7 @@ class Scene:
                     thorpy.functions.quit_menu_func()
             if self.hero.dyn.velocity.z < 0.1 and self.hero.engine.fuel <= 0:
                 self.hero.box.z[0] = -1000
+                thorpy.launch_blocking_alert("You have no fuel... Use the competition prize to buy fuel")
                 thorpy.functions.quit_menu_func()
             if self.hero.life <= 0:
                 if not self.hero_dead:

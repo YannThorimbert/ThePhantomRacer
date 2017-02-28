@@ -5,31 +5,79 @@ import parameters
 TCOLOR = (255,0,0)
 
 
+class LargeTextManager:
+    """Handles font color, font size and indentation."""
+    def __init__(self, indent="    ", endpar="\n\n"):
+        self.indent = indent
+        self.endpar = endpar
+        self.paragraphs = []
+
+    def paragraph(self,*text):
+        """Add a new paragraph"""
+        if len(self.paragraphs) > 0:
+            self.end_paragraph()
+            content = self.indent
+        else:
+            content =""
+        for t in text:
+            content += t
+        self.paragraphs.append(content)
+
+    def end_paragraph(self):
+        self.paragraphs[-1] += self.endpar
+
+    def more(self, *text):
+        """Append to the current paragraph"""
+        for t in text:
+            self.paragraphs[-1] += t
+
+    def get_all(self):
+        text = ""
+        for p in self.paragraphs:
+            text += p
+        return text
+
+
+t = LargeTextManager()
+t.paragraph("He raised me from the dead")
+t.paragraph("I did not really want to... However, I cannot say I had no choice. ")
+t.more("This would be a lie. Lies led me to death.")
+t.paragraph("For decades, I have been living ruthlessly, in the immorality, ")
+t.more("the crime and all the possible disrespect for any form of life, including mine.")
+t.paragraph("I was about to die when the mage came and suspended my last breath.")
+t.more("He proposed a deal. Considering my actions, I deserved the Great Void ")
+t.more("which was waiting for me, he said, altough his considerable power could")
+t.more("have saved me ; but he did not want to extend such a miserable life in this world anymore.")
+t.more("Nevertheless, he could send me to another world, a world which would better fit my poor")
+t.more("morality, a world to which he would not regret to raise me from the dead. ")
+t.more("Moreover, he said, if I accepted the deal, then I would be a 'kind of gladiator' performing for his 'company'.")
+t.paragraph("The dilemma was the following: either I died in my current state of unfamous,"+\
+            " unloved, botched and wicked human, ")
+t.more("or I accepted to go and live in this vicious other world, where I would have no freedom...")
+INTRO = t.get_all()
+
+t = LargeTextManager()
+t.paragraph("He raised me from the dead, and I did regret my choice.")
+t.paragraph("This ignominious world was full of creatures more vicious and more disgusting "+\
+           "than I even was before. Terrifying machines made of steel and fire were racing everywhere.")
+t.paragraph("The kind of gladiator I was supposed to be was very different than what I imagined... "+\
+           "The company first employed me as a slave. Then, months after months, I was forced to learn how "+\
+           "to drive the flying machines. They organized races. Racing competitions seem to be a religion here. " +\
+           "As a counter part, they gave me money, with which I was free to improve my personal race machine.")
+t.paragraph("However the most important was the following: each year, freedom was given back to the winner "+\
+           "of the Intergalactic Racing League.")
+INTRO2 = t.get_all()
 
 def launch_intro_text():
     S = parameters.W
     screen = thorpy.get_screen()
     title_text = "The beginning"
     title = thorpy.make_text(title_text, thorpy.style.TITLE_FONT_SIZE, TCOLOR)
-    text = "He raised me from the dead.\n\n\
-            I did not really want to... However, I cannot say I had no choice. "+\
-            "This would be a lie. Lies led me to death.\n"+\
-            "For decades, I have been "+\
-            "living ruthlessly, in the immorality, the crime and all the possible "+\
-            "disrespect for any form of life, including mine.\n\n"+\
-            "I was about to die when the mage came and suspended my last breath." + \
-            "He proposed a deal. Considering my actions, I deserved the Great Void "+\
-            "which was waiting for me, he said, altough his considerable power could" +\
-            "have saved me ; but he did not want to extend such a miserable life in this world anymore.\n"+\
-            "Nevertheless, he could send me to another world, a world which would better fit my poor" +\
-            "morality, a world to which he would not regret to raise me from the dead. " +\
-            "Moreover, he said, if I accepted the deal, then I would be a 'kind of gladiator' performing for his 'company'.\n\n" +\
-            "The dilemma was the following: either I died in my current state of unfamous, unloved, botched and wicked human, "+\
-            "or I accepted to go and live in this vicious other world, where I would have no freedom..."
+
     end_text = "... I accepted the deal as the lesser of two evils."
     end_text = thorpy.pack_text(400,end_text)
     end = thorpy.make_text(end_text, thorpy.style.TITLE_FONT_SIZE, TCOLOR)
-    letter = thorpy.make_text(thorpy.pack_text(int(0.7*S),text))
+    letter = thorpy.make_text(thorpy.pack_text(int(0.7*S),INTRO))
     w = letter.get_fus_rect().w + 10
     boxletter = thorpy.Box.make([letter],(w,S//2))
     boxletter.refresh_lift()
@@ -55,19 +103,10 @@ def launch_intro_text2():
     screen = thorpy.get_screen()
     title_text = "The beginning (2)"
     title = thorpy.make_text(title_text, thorpy.style.TITLE_FONT_SIZE, TCOLOR)
-    text = "He raised me from the dead, and I did regret my choice.\n\n"+\
-           "This ignominious world was full of creatures more vicious and more disgusting "+\
-           "than I even was before. Terrifying machines made of steel and fire were racing everywhere.\n\n" +\
-           "The kind of gladiator I was supposed to be was very different than what I imagined... "+\
-           "The company first employed me as a slave. Then, months after months, I was forced to learn how "+\
-           "to drive the flying machines. They organized races. Racing competitions seem to be a religion here. " +\
-           "As a counter part, they gave me money, with which I was free to improve my personal race machine.\n\n" +\
-           "However the most important was the following: each year, freedom was given back to the winner "+\
-           "of the Intergalactic Racing League."
     end_text = "... My only hope now is to become the greatest racer.."
     end_text = thorpy.pack_text(400,end_text)
     end = thorpy.make_text(end_text, thorpy.style.TITLE_FONT_SIZE, TCOLOR)
-    letter = thorpy.make_text(thorpy.pack_text(int(0.7*S),text))
+    letter = thorpy.make_text(thorpy.pack_text(int(0.7*S),INTRO2))
     w = letter.get_fus_rect().w + 10
     boxletter = thorpy.Box.make([letter],(w,S//2))
     boxletter.refresh_lift()

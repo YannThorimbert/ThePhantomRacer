@@ -34,5 +34,9 @@ class LevelGenerator:
         for i in range(nparts):
             density = random.random()*(max_density-min_density) + min_density
             print("random gen", density)
-            self.add_static_obstacles(density, i*zpart,(i+1)*zpart, objects)
+            if i == 0:
+                begin = 50
+            else:
+                begin = i*zpart
+            self.add_static_obstacles(density, begin, (i+1)*zpart, objects)
 

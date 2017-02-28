@@ -69,6 +69,13 @@ def launch_options():
 ##    ps = thorpy.ParamSetterLauncher()
 ##    e = thorpy.Box()
 
+def get_category(position):
+    k = parameters.NPLAYERS // 3
+    if position < k:
+        return parameters.CATEGORIES[0],3
+    elif position < 2*k:
+        return parameters.CATEGORIES[1],2
+    return parameters.CATEGORIES[2],1
 
 class Player:
 
@@ -139,6 +146,7 @@ class ShowRanking:
             ranking[2].points -= 1
             ranking[2].money += 100
             ranking[1].money += 200
+            if ranking[2].points < 0: ranking[2].points = 0
         #
         if choosevessel:
             self.e_players = []

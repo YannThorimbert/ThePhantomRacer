@@ -486,6 +486,7 @@ class Object3D(Path3D):
         self.compactize() #...and now they are not
         self.visible = True
         self.box = None
+        self.color = Material((255,255,255))
 
     def reset_from_triangles(self,triangles):
         self.triangles = triangles
