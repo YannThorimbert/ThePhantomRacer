@@ -3,6 +3,8 @@ from pygame.math import Vector3 as V3
 W,H = 900,600
 FPS = 40
 
+THEME = "classic"
+
 AA = True
 
 
@@ -25,6 +27,8 @@ RAILH = 12
 TURN = 2. / 10.
 FRICTION = 1. / 500.
 MASS = 1. / 10.
+
+CURRENT_QUALITY = 1.
 
 OVERTAKE_SLOWER = 0.75
 LIFE_FACTOR = 10
@@ -54,6 +58,14 @@ CATEGORIES = ["Intergalatic League", "International Championship", "National cup
 
 ZFINISH = 3000
 ENGINE_POWER = 0.03
+MIN_POWER = 0.8
+MAX_POWER = 1.2
+MIN_MASS = 0.6
+MAX_MASS = 1.4
+MIN_TURN = 0.2
+MAX_TURN = 1.2
+MIN_FUEL = 1800
+MAX_FUEL = 2400
 
 QUIT_GAME = False
 

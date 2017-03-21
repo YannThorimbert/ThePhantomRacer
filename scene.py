@@ -29,7 +29,7 @@ class Scene:
         self.debris = []
 ##        self.background = pygame.transform.smoothscale(self.background, (parameters.W,parameters.H//2))
         self.start_i = 5
-        self.start_delay = 10 + int(random.random()*1000)//30
+        self.start_delay = 10 + int(random.random()*1000)//40
         self.ranking = []
         self.hero_dead = None
         self.abandon = False
@@ -74,7 +74,7 @@ class Scene:
             self.hero.boost()
         if press[pygame.K_ESCAPE]:
             import gamelogic
-            gamelogic.launch_options()
+            gamelogic.launch_ingame_options()
 
     def show_start(self):
         spacing = 50
@@ -105,7 +105,7 @@ class Scene:
 
 
     def func_time(self):
-##        self.start_i = -1
+        self.start_i = -1
         self.i += 1
         if self.start_i < 0:
 ##            if self.i%10 == 0:
@@ -128,7 +128,7 @@ class Scene:
             self.vessel_collisions()
             finisher = self.check_finish()
             if self.abandon:
-                thorpy.launch_blocking_alert("You abandoned.")
+                thorpy.launch_blocking_alert("You abandoned.","")
                 thorpy.functions.quit_menu_func()
             if finisher:
                 print("FINISHING:",finisher.player.name, finisher)
@@ -136,23 +136,23 @@ class Scene:
                 self.ranking.append(finisher)
                 if len(self.ranking) == 3:
                     print("YOU LOOSE")
-                    thorpy.launch_blocking_alert("You are the last of this race.")
+                    thorpy.launch_blocking_alert("You are the last of this race.","")
                     thorpy.functions.quit_menu_func()
                 elif finisher is self.hero:
                     print("YOU WIN")
                     thorpy.functions.quit_menu_func()
             if self.hero.dyn.velocity.z < 0.1 and self.hero.engine.fuel <= 0:
                 self.hero.box.z[0] = -1000
-                thorpy.launch_blocking_alert("You have no fuel... Use the competition prize to buy fuel")
+                thorpy.launch_blocking_alert("You have no fuel... Use the competition prize to buy fuel","")
                 thorpy.functions.quit_menu_func()
             if self.hero.life <= 0:
                 if not self.hero_dead:
                     self.hero_dead = self.i
                     self.debris.append(destroy.DestroyPath(self.hero, self.hero.dyn.velocity, 200))
                     self.hero.visible = False
-                elif self.i - self.hero_dead > 100:
+                elif self.i - self.hero_dead > 30:
                     self.hero.box.z[0] = -1000
-                    thorpy.launch_blocking_alert("You completely destroyed your vessel.")
+                    thorpy.launch_blocking_alert("You completely destroyed your vessel.",None)
                     thorpy.functions.quit_menu_func()
             # display
             self.hide_useless_obstacles()
@@ -223,7 +223,6 @@ class Scene:
             for o2 in self.vessels:
                 if o.should_collide(o2):
                     vessel.collision(o,o2)
-
 
     def hide_useless_obstacles(self):
         for o in self.track.obstacles:

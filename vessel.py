@@ -20,6 +20,7 @@ class Move:
 
 
     def move(self, delta, i):
+        """Returns True if the vessel can START moving"""
         if i > self.last_pressed + parameters.MOVE_DELTA_I:
             self.delta = delta
             self.last_pressed = i
@@ -28,21 +29,17 @@ class Move:
         return False
 
     def refresh(self):
+        """Return the current velocity"""
         if self.delta is not None:
             if abs(self.delta) < abs(self.vel):
-                return self.delta
+                tmp = self.delta
+                self.delta = 0
+                return tmp
             else:
                 self.delta -= self.vel
                 return self.vel
         return 0.
 
-
-#nouvelle politique:
-#   quand user appuie sur une touche, on entame la transition vers autre rail,
-#   jusqu'a ce que l'autre rail soit atteint, sauf si user appuie sur une touche,
-#   auquel cas la destination est incrementee
-#       ==> attributs: dest, vel
-#   Eventuellement: smoothing des derniers steps.
 
 class Dynamics:
 
@@ -65,19 +62,19 @@ class Dynamics:
 
 class Part:
 
-    def __init__(self, obj):
-        self.obj = obj
-        self.turn = 1.
-        self.friction = 1.
-        self.mass = 1.
+    def __init__(self, triangles, turn, friction, mass):
+        self.triangles = triangles
+        self.turn = turn
+        self.friction = friction
+        self.mass = mass
 
 class Engine(Part):
 
-    def __init__(self, obj):
-        Part.__init__(self, obj)
-        self.fuel = 2000
-        self.max_fuel = self.fuel
-        self.force = parameters.ENGINE_POWER
+    def __init__(self, max_fuel, force):
+        Part.__init__(self, [], 1., 1., 1.)
+        self.fuel = max_fuel
+        self.max_fuel = max_fuel
+        self.force = force#parameters.ENGINE_POWER
 
 def sign(x):
     if x < 0:
@@ -138,13 +135,13 @@ class Vessel(core3d.Object3D):
         self.mass = None
         self.engine_force = None
         #
-        self.nose = Part("")
-        self.cockpit = Part("")
-        self.tail = Part("")
-        self.wings = Part("")
-        self.vwings = Part("")
-        self.engine = Engine("")
-        self.parts = []
+        self.nose = None
+        self.cockpit = None
+        self.tail = None
+        self.lwing = None
+        self.rwing = None
+        self.engine = None
+##        self.parts = []
         #
         self.name = "no name"
         #
@@ -163,6 +160,8 @@ class Vessel(core3d.Object3D):
 
     def reset(self):
         self.dyn.reset()
+        self.rotate_around_center_x(-self.angle_x) #new!
+        self.rotate_around_center_z(-self.angle_z)
         self.angle_x = 0.
         self.angle_z = 0.
         self.to_move_x = 0
@@ -283,12 +282,15 @@ class Vessel(core3d.Object3D):
                 vessel.move(V3(0,0,20))
         #cam move et enlever l'assymetrie?
 
+    def get_parts(self):
+        return [self.nose, self.cockpit, self.tail, self.lwing, self.rwing,
+                self.engine]
+
     def compute_dynamics(self):
-        self.parts = [self.nose, self.cockpit, self.tail, self.wings, self.engine]
-        self.turn = sum([p.turn for p in self.parts]) * parameters.TURN
-        self.friction = sum([p.friction for p in self.parts]) * parameters.FRICTION
-        self.mass = sum([p.mass for p in self.parts]) * parameters.MASS
-        print("Dynamics:",self.turn,self.friction,self.mass)
+        parts = self.get_parts()
+        self.turn = sum([p.turn for p in parts]) * parameters.TURN
+        self.friction = sum([p.friction for p in parts]) * parameters.FRICTION
+        self.mass = sum([p.mass for p in parts]) * parameters.MASS
         self.dyn = Dynamics(self)
         self.engine_force = self.engine.force/self.mass
         self.life = int(self.mass * parameters.LIFE_FACTOR)
@@ -303,8 +305,8 @@ class Vessel(core3d.Object3D):
 
     def refresh_mesh(self):
         triangles = []
-        for p in self.parts:
-            triangles += p.obj.get_copy().triangles
+        for p in self.get_parts():
+            triangles += p.triangles
         self.reset_from_triangles(triangles)
 
     def extract_tnc(self, glass_color):

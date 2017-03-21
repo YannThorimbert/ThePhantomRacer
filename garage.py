@@ -1,3 +1,4 @@
+from __future__ import print_function
 import random
 import pygame
 from pygame.math import Vector3 as V3
@@ -5,6 +6,42 @@ import thorpy
 import core3d, parameters, camera, light, primitivemeshes
 from light import Material
 
+#f(M) = 1.
+#f(m) = 0.
+
+MAX_POWER = parameters.MAX_POWER*parameters.ENGINE_POWER
+MIN_POWER = parameters.MIN_POWER*parameters.ENGINE_POWER
+
+def get_vessel_element(v):
+    red = (255,50,50)
+    green = (50,255,50)
+    f = round(v.engine.force * 10000 * 1.5)
+    c = round(v.engine.max_fuel)
+    t = round(v.turn * 100)
+    d = round(v.friction * 100,2)
+    m = round(v.mass * 4000)
+    e_engine = thorpy.SkillBar.make("Power: "+str(f)+" kW",MIN_POWER,MAX_POWER,green)
+    e_engine.set_life(v.engine.force)
+##    e_engine = thorpy.make_text("Power: "+str(f)+" kW")
+    e_turn = thorpy.SkillBar.make("Agility: "+str(t), parameters.MIN_TURN,
+                                    parameters.MAX_TURN, green)
+    e_turn.set_life(v.turn/parameters.TURN/5.) #!!
+##    e_turn = thorpy.make_text("Agility: "+str(t))
+    e_consumption = thorpy.LifeBar.make("Consumption: "+str(c)+" kW/L", red)
+    e_consumption.set_life(min(1., c/20.))
+##    e_consumption = thorpy.make_text("Consumption: "+str(c)+" kW/L")
+    e_friction = thorpy.LifeBar.make("Friction: "+str(d), red)
+    e_friction.set_life(min(1., d/2.))
+##    e_friction = thorpy.make_text("Friction: "+str(d))
+    e_mass = thorpy.SkillBar.make("Mass: "+str(m)+" kg", parameters.MIN_MASS,
+                                        parameters.MAX_MASS, red)
+    print("mmm",v.mass,v.mass/parameters.MASS/5.)
+    e_mass.set_life(v.mass/parameters.MASS/5.)
+##    e_mass = thorpy.make_text("Mass: "+str(m)+" kg")
+    box = thorpy.Box.make([e_engine,e_turn,e_consumption,e_friction,e_mass])
+    thorpy.store(box,align="right",x=box.get_fus_rect().right-3,y=10)
+    box.fit_children()
+    return box
 
 
 def color_glasses(model, glass_color):
@@ -53,10 +90,19 @@ def generate_vessel(color, glass_color):
     n = random.choice(parameters.MODELS)+".stl"
     c = random.choice(parameters.MODELS)+".stl"
     #
-    t =  cut_object(t,color,glass_color)[0]
-    n =  cut_object(n,color,glass_color)[1]
-    c =  cut_object(c,color,glass_color)[2]
-    return core3d.ManualObject3D(t.triangles+n.triangles+c.triangles)
+    to =  cut_object(t,color,glass_color)[0]
+    no =  cut_object(n,color,glass_color)[1]
+    co =  cut_object(c,color,glass_color)[2]
+    return to, no, co
+
+def generate_part(color, glass_color):
+    if random.random() < 0.75:
+        mesh = random.choice(parameters.MODELS)+".stl"
+        part_number = random.randint(0,2)
+        part = cut_object(mesh, color, glass_color)[part_number]
+        obj = core3d.ManualObject3D(part.triangles)
+    else:
+        w = garage.wings_free(1.3,1.5,0.2,-0.5,1.,rest,5.,y=0.)
 
 
 
@@ -144,7 +190,7 @@ def get_rankings_box():
 def launch_rankings(garage):
     box = get_rankings_box()
 ##    box2 = thorpy.make_ok_box([box])
-    box2 = thorpy.dialog.make_textbox("Rankings","",elements=[box])
+    box2 = thorpy.make_textbox("Rankings","",elements=[box])
 ##    box.set_size((300,300))
 ##    box.refresh_lift()
 ##    thorpy.launch(box2)
@@ -193,6 +239,11 @@ class Garage:
         self.e_ok.set_font_size(thorpy.style.FONT_SIZE+3)
         self.e_ok.scale_to_title()
         #
+        #
+        def refresh_repair():
+            damages = str(round(100.*(1. - self.ovessel.life/self.ovessel.max_life)))
+            self.e_damage.set_text("Vessel damages: " + damages + "%")
+            self.e_money.set_text("Money: "+str(parameters.player.money)+" $")
         def choice_repair():
             cost = (self.ovessel.max_life - self.ovessel.life)*300
             if cost <= parameters.player.money:
@@ -200,11 +251,17 @@ class Garage:
                                                 str(cost)+"$"):
                     self.ovessel.life = self.ovessel.max_life
                     parameters.player.money -= cost
-                    damages = str(round(100.*(1. - self.ovessel.life/self.ovessel.max_life)))
-                    self.e_damage.set_text("Vessel damages: " + damages + "%")
-                    self.e_money.set_text("Money: "+str(parameters.player.money)+" $")
-            else:
-                thorpy.launch_blocking_alert("Repairing costs "+str(cost)+" $. You don't have enough money.")
+                    refresh_repair()
+            elif thorpy.launch_binary_choice("Repairing costs "+str(cost)+\
+                                            " $. You don't have enough money.\n"+\
+                                            "Do you want to use all your money for"+\
+                                            " repairing as much as possible?"):
+                    #(after_repair - self.ovessel.life)*300 = money
+                    #==> after_repair = money/300 + self.ovessel.life
+                    repaired = int(parameters.player.money/300. + self.ovessel.life)
+                    parameters.player.money -= (repaired - self.ovessel.life)*300
+                    self.ovessel.life = repaired
+                    refresh_repair()
             self.e_bckgr.blit()
             self.refresh_display()
             pygame.display.flip()
@@ -233,18 +290,31 @@ class Garage:
         fuel = str(round(100*self.ovessel.engine.fuel/self.ovessel.engine.max_fuel))
         self.e_fuel = hud.LifeBar("Fuel: "+fuel+" %",text_color=(255,0,0),size=(100,30))
         self.e_fuel.set_life(self.ovessel.engine.fuel/self.ovessel.engine.max_fuel)
+        def refresh_refuel():
+            life = self.ovessel.engine.fuel / self.ovessel.engine.max_fuel
+            self.e_fuel.set_life(life)
+            self.e_fuel.set_life_text("Fuel: "+str(round(life*100))+" %")
+            self.e_money.set_text("Money: "+str(parameters.player.money)+" $")
         def choice_refuel():
             cost = (self.ovessel.engine.max_fuel - self.ovessel.engine.fuel)//2
             if cost <= parameters.player.money:
                 if thorpy.launch_binary_choice("Are you sure? This will cost "+\
                                                 str(cost)+"$"):
-                    self.e_fuel.set_life(1.)
-                    self.e_fuel.set_life_text("Fuel: 100 %")
-                    parameters.player.money -= cost
-                    self.e_money.set_text("Money: "+str(parameters.player.money)+" $")
                     self.ovessel.engine.fuel = self.ovessel.engine.max_fuel
-            else:
-                thorpy.launch_blocking_alert("Refueling costs "+str(cost)+" $. You don't have enough money.")
+                    parameters.player.money -= cost
+                    refresh_refuel()
+##                    self.e_fuel.set_life(1.)
+##                    self.e_fuel.set_life_text("Fuel: 100 %")
+##                    parameters.player.money -= cost
+##                    self.e_money.set_text("Money: "+str(parameters.player.money)+" $")
+##                    self.ovessel.engine.fuel = self.ovessel.engine.max_fuel
+            elif thorpy.launch_binary_choice("Refueling costs "+str(cost)+" $. You don't have enough money.\n"+\
+                                        "Do you want to spend all your money to refuel as much as possible?"):
+                #cost = (newfuel - fuel)//2 ==> 2*cost + fuel = newfuel
+                self.ovessel.engine.fuel += 2*parameters.player.money
+                parameters.player.money = 0
+                refresh_refuel()
+##                thorpy.launch_blocking_alert("Refueling costs "+str(cost)+" $. You don't have enough money.")
             self.e_bckgr.blit()
             self.refresh_display()
             pygame.display.flip()
@@ -261,8 +331,11 @@ class Garage:
                                     self.e_ranking,self.e_ok])
         self.e_bckgr.add_elements([self.e_box,self.e_menu])
         thorpy.store(self.e_bckgr, x = 200)
-        self.e_bckgr.add_elements([self.e_viewport_frame,self.e_money])
+        self.e_skills = get_vessel_element(parameters.player.vessel)
+        self.e_bckgr.add_elements([self.e_viewport_frame,self.e_money,
+                                    self.e_skills])
         self.e_menu.move((0,30))
+        self.e_skills.stick_to(self.e_viewport_frame, "left", "right")
 
     def refresh_display(self):
         self.vessel.rotate_around_center_y(1)

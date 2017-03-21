@@ -4,6 +4,7 @@ from pygame.math import Vector3 as V3
 import thorpy
 import parameters, drawing, light, camera
 import alphabet, scenario
+from garage import get_vessel_element
 
 
 wordgen1 = alphabet.Dictionnary("thorn.txt","thorn_precisions.txt")
@@ -35,7 +36,8 @@ def get_display_options():
     e = thorpy.ParamSetterLauncher.make([varset], "Display options", "Display options")
     return e, varset
 
-def launch_options():
+def launch_ingame_options():
+    thorpy.set_theme("classic")
     def func():
         parameters.scene.refresh_display()
         box.blit()
@@ -45,6 +47,7 @@ def launch_options():
     def leave():
         if thorpy.launch_binary_choice("Are you sure?"):
             parameters.scene.abandon = True
+            thorpy.functions.quit_menu_func()
         func()
     q = thorpy.make_button("Abandon",leave)
     box = thorpy.make_ok_box([thorpy.make_text("Pause"),thorpy.Line.make(100,"h"), e,e2,q])
@@ -56,6 +59,7 @@ def launch_options():
     scenario.launch(box)
     parameters.scene.cam.set_aa(varset.get_value("aa"))
     parameters.VISIBILITY = varset.get_value("visibility")
+    thorpy.set_theme(parameters.THEME)
 
 
 ##    varset = thorpy.VarSet()
@@ -150,15 +154,24 @@ class ShowRanking:
         #
         if choosevessel:
             self.e_players = []
-            for kk in parameters.MODELS:
-                def myfunc(mymodel):
-                    parameters.HERO_MODEL = mymodel
-                    print("setting model",mymodel)
-                    thorpy.functions.quit_menu_func()
-                b = thorpy.make_button(kk,myfunc,{"mymodel":kk})
-                self.e_players.append(b)
+            def other_vessel():
+                self.vessels[0] = create_vessel(parameters.HERO_COLOR)
+                self.vessels[0].set_pos(V3(0,-1*4.5,20))
+                self.vessels[0].move(V3(0,4,0))
+                #replace self.ve
+                new_ve = get_vessel_element(self.vessels[0])
+                self.e_bckgr.replace_element(self.ve, new_ve)
+                thorpy.functions.refresh_current_menu()
+                self.ve = new_ve
+                self.e_bckgr.unblit_and_reblit()
+            b = thorpy.make_button("Generate another vessel", other_vessel)
+            c = thorpy.make_button("Done", thorpy.functions.quit_menu_func)
+            self.e_players.append(b)
+            self.e_players.append(c)
             from main import create_vessel
-            self.vessels = [create_vessel(parameters.HERO_COLOR,model) for model in parameters.MODELS]
+            self.vessels = [create_vessel(parameters.HERO_COLOR)]
+            self.ve = get_vessel_element(self.vessels[0])
+            self.e_players.append(self.ve)
         else:
             if results:
                 self.e_players = [p.get_element(str(i+1)+") ") for i,p in enumerate(ranking)]
@@ -185,10 +198,14 @@ class ShowRanking:
                                             self.refresh_display,
                                             {"id":thorpy.constants.EVENT_TIME})
         self.e_bckgr.add_reaction(reaction)
-        for i,v in enumerate(self.vessels):
-            pos = self.e_players[i].get_fus_rect().center
-            v.set_pos(V3(0,-i*4.5,20))
-            v.move(V3(0,4,0))
+        if not choosevessel:
+            for i,v in enumerate(self.vessels):
+                pos = self.e_players[i].get_fus_rect().center
+                v.set_pos(V3(0,-i*4.5,20))
+                v.move(V3(0,4,0))
+        else:
+            self.vessels[0].set_pos(V3(0,-1*4.5,20))
+            self.vessels[0].move(V3(0,4,0))
         #
         thorpy.store(self.e_bckgr,gap=40)
         for e in self.e_players:
@@ -209,6 +226,9 @@ class ShowRanking:
             self.e_back.stick_to(self.e_ok, "left", "right")
             self.e_back.move((-20,0))
             self.e_bckgr.add_elements([self.e_back])
+        if not results:
+            reaction = thorpy.Reaction(pygame.MOUSEMOTION, self.mousemotion)
+            self.e_bckgr.add_reaction(reaction)
         m = thorpy.Menu(self.e_bckgr)
         m.play()
 
@@ -220,3 +240,24 @@ class ShowRanking:
             v.refresh_and_draw(self.cam,self.light)
         self.screen.blit(self.viewport,self.viewport_rect)
         pygame.display.update(self.viewport_rect)
+
+    def mousemotion(self,e):
+        if self.viewport_rect.collidepoint(pygame.mouse.get_pos()):
+            thorpy.change_cursor(thorpy.constants.CURSOR_BROKEN)
+            if pygame.mouse.get_pressed()[0]:
+                dcx = e.pos[0] - self.viewport_rect.centerx#parameters.W//2
+                dcy = e.pos[1] - self.viewport_rect.centery#parameters.H//2
+                dist = dcx*dcx + dcy*dcy
+                k = -1.
+                #a*rotate_z + (1-a)*rotate_x = k*rel.y
+                #rotate_y = k*rel.x
+                #dist grand : a grand
+                a = dist / float(parameters.W//2)**2
+                rotate_z = a * k * e.rel[1]
+                rotate_x = (1.-a) * k * e.rel[1]
+                rotate_y = k * e.rel[0]
+                self.vessels[0].rotate_around_center_x(rotate_x)
+                self.vessels[0].rotate_around_center_y(rotate_y)
+                self.vessels[0].rotate_around_center_z(rotate_z)
+        else:
+            thorpy.change_cursor(thorpy.constants.CURSOR_NORMAL)

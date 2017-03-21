@@ -19,64 +19,65 @@ import obstacle
 import scenario
 from core3d import ManualObject3D
 
-#pour repair et fuel, proposer d'utiliser tout l'argent si pas possible
+#remettre feux, speech, human ...
 
 #quand change de categorie:
-#   -opponents ont 1 boost moteur.
-#   -background change
+#   -background change ==> etoiles au dernier niveau
 #   -bruit de foule (pendant les feux) change
 
-#afficher chrono, gain de chacun
-
-#stocker toutes les pieces + set pour procedural
-#structure de vaisseau procedural utilisant les pieces preloadees, avec class pour le materiau
-#ajouter price dans parts
-
+#De temps a autres marchand de pieces passe et on peut acheter
 
 #alert/ecran WIN (avec une coupe en 3D)
-#alert quand change de categorie
 #statistics
-#vaisseau avec un trou en nez et un trou en queue
-
-
-4.
-#choisir vaisseau avec un Ranking et un fakePlayer
 
 #wings au hasard - vaisseau au hasard (facile!) - au moment du choix, demander regenerer vaisseau
+#derive
+
+4.
 
 #sons
 
-
 #qqch qui montre que on accelere (mouvement cam!)
-
-
-# ##############################################################################
-#parts:
-    #wings : encore triangle
-    #derive : (traduction?) ==> direct utiliser wings avec un material sans shadow!
-    #engine : 2 types : cylindre, cube
-# ##############################################################################
-
-
-#nb opponents varie
 
 #get_copy doit aussi copier from_initrot!!
 
-#2pbs : fin
 
-def create_vessel(color, model="BangDynamics"):
-##    if not parameters.canonic_vessels:
-##        garage.build_all_parts()
+def create_vessel(color):
+    quality = parameters.CURRENT_QUALITY
     glass = Material((0,0,0),M=(120,120,120))
     rest = Material(color)
-    g = garage.generate_vessel(rest,glass)
-    w = garage.wings_free(1.3,2.5,0.2,-0.5,1.,rest,5.,y=0.)
-    v = vessel.Vessel(None,more_triangles=w[0].triangles+w[1].triangles+g.triangles)
+    t,n,c = garage.generate_vessel(rest, glass)
+    w = garage.wings_free(1.3,1.5,0.2,-0.5,1.,rest,5.,y=0.)
+##    v = vessel.Vessel(None,more_triangles=w[0].triangles+w[1].triangles+\
+##                                            t.triangles+n.triangles+c.triangles)
+    v = vessel.Vessel(None,more_triangles=[])
+    #quality = power*friction
+    #quality = turn*max_fuel
+##    friction = 0.7 + random.random()*(1.3-0.7)
+    power = parameters.MIN_POWER + random.random()*(parameters.MAX_POWER-parameters.MIN_POWER)
+    friction = quality/power
+    power *= parameters.ENGINE_POWER
+    mass = parameters.MIN_MASS + random.random()*(parameters.MAX_MASS-parameters.MIN_MASS)
+    turn = parameters.MIN_TURN + random.random()*(parameters.MAX_TURN-parameters.MIN_TURN)
+    max_fuel = quality/turn
+    max_fuel = parameters.MIN_FUEL + int(max_fuel*(parameters.MAX_FUEL-parameters.MIN_FUEL))
+    #
+    v.tail = vessel.Part(t.triangles, turn, friction, mass)
+    v.nose = vessel.Part(n.triangles, turn, friction, mass)
+    v.cockpit = vessel.Part(c.triangles, turn, friction, mass)
+    v.lwing = vessel.Part(w[0].triangles, turn/2., friction/2., mass/2.)
+    v.rwing = vessel.Part(w[1].triangles, turn/2., friction/2., mass/2.)
+    v.engine= vessel.Engine(max_fuel, power)
+    v.engine.mass = mass
+    v.engine.turn = turn
+    #
+    v.refresh_mesh()
     v.rotate_around_center_y(-90)
     v.compute_box3D()
     v.compute_dynamics()
     v.from_init_rot = V3()
     v.color = rest
+    #
     return v
 
 def init_game():
@@ -86,7 +87,7 @@ def init_game():
     hero_player.points = 0
     parameters.player = hero_player
     parameters.players += [hero_player]
-    hero = create_vessel(hero_color,model=parameters.HERO_MODEL)
+    hero = create_vessel(hero_color)
     hero.is_hero = True
     hero.mass /= 2.
     hero.compute_dynamics()
@@ -164,7 +165,7 @@ def init_scene():
             finish.set_color(Material(random.choice(color)))
             scene.objs.append(finish.get_copy())
     scene.track = track
-    scene.opponents = [create_vessel(random.choice(drawing.colors),random.choice(parameters.MODELS)) for i in range(2)]
+    scene.opponents = [create_vessel(random.choice(drawing.colors)) for i in range(2)]
     scene.objs += scene.opponents
 
 ##    fin = Object3D("finish.stl")
@@ -205,7 +206,7 @@ def init_scene():
 
 if __name__ == "__main__":
     app = thorpy.Application((parameters.W,parameters.H))
-    thorpy.set_theme("human")
+    thorpy.set_theme(parameters.THEME)
     ##    thorpy.application.SHOW_FPS = True
     screen = thorpy.get_screen()
     import dialog
@@ -216,34 +217,33 @@ if __name__ == "__main__":
         transp=False)
         e_bckgr.unblit_and_reblit()
 
+    DEBUG = False
     def play():
-##        varset = thorpy.VarSet()
-##        varset.add("color", parameters.HERO_COLOR, "Choose vessel color:")
-##        color = thorpy.ParamSetter.make([varset])
-        name = thorpy.Inserter.make("Choose your name",value="Hero")
-        box = thorpy.make_ok_box([name])
-        thorpy.auto_ok(box)
-        box.center()
-##        scenario.launch(box)
-        thorpy.launch_blocking(box,e_bckgr)
-        parameters.HERO_NAME = name.get_value()
+        if not DEBUG:
+            name = thorpy.Inserter.make("Choose your name",value="Hero")
+            box = thorpy.make_ok_box([name])
+            thorpy.auto_ok(box)
+            box.center()
+    ##        scenario.launch(box)
+            thorpy.launch_blocking(box,e_bckgr)
+            parameters.HERO_NAME = name.get_value()
 
-        tit = thorpy.make_text("Choose vessel color")
-        color = thorpy.ColorSetter.make("Choose vessel color")
-        box = thorpy.make_ok_box([tit,color])
-        thorpy.auto_ok(box)
-        box.center()
-##        scenario.launch(box)
-        thorpy.launch_blocking(box)
-        parameters.HERO_COLOR = color.get_value()
-        print("setting", parameters.HERO_COLOR)
-        #
-        gamelogic.ShowRanking("Choose a vessel", "Continue", [], False, True)
-        thorpy.set_theme("classic")
-        scenario.launch_intro_text()
-        scenario.launch_intro_text2()
-        scenario.launch_help()
-        thorpy.set_theme("human")
+            tit = thorpy.make_text("Choose vessel color")
+            color = thorpy.ColorSetter.make("Choose vessel color")
+            box = thorpy.make_ok_box([tit,color])
+            thorpy.auto_ok(box)
+            box.center()
+    ##        scenario.launch(box)
+            thorpy.launch_blocking(box)
+            parameters.HERO_COLOR = color.get_value()
+            print("setting", parameters.HERO_COLOR)
+            #
+            gamelogic.ShowRanking("Choose a vessel", "Continue", [], False, True)
+            thorpy.set_theme("classic")
+            scenario.launch_intro_text()
+            scenario.launch_intro_text2()
+            scenario.launch_help()
+        thorpy.set_theme(parameters.THEME)
         init_game()
         parameters.AA = vs.get_value("aa")
         parameters.VISIBILITY = vs.get_value("visibility")
@@ -267,19 +267,20 @@ if __name__ == "__main__":
                                     scene.get_current_ranking_players(),results=True)
             gamelogic.refresh_ranking()
             cat_after,c2 = gamelogic.get_category(parameters.player.ranking-1)
-            if c2>c1:
+            if c2 > c1:
                 thorpy.launch_blocking_alert("Your category is now "+cat_after+\
                     "!\nCongratulations, "+parameters.HERO_NAME+".\nYou earned an extra bonus of 500 $."+\
                     "\n\nThe track length in this category is 1000m longer.")
                 parameters.player.money += 500
                 parameters.ZFINISH += 1000
-                parameters.ENGINE_POWER += 0.005
+##                parameters.ENGINE_POWER += 0.005
+                parameters.CURRENT_QUALITY += 0.5
             elif c2<c1:
                 thorpy.launch_blocking_alert("Your category is now "+cat_after+\
                     "!\nThis is very deceptive, "+parameters.HERO_NAME+".\n\n"+\
                     "The track length in this category is 1000m shorter.")
                 parameters.ZFINISH -= 1000
-                parameters.ENGINE_POWER -= 0.005
+                parameters.CURRENT_QUALITY -= 0.5
             parameters.flush()
             if parameters.player.ranking == parameters.players[0].ranking:
                 scenario.launch_end()
