@@ -21,25 +21,28 @@ from core3d import ManualObject3D
 
 #remettre feux, speech, human ...
 
+################################################################################
+#flush garage/gamelogic angle...
+    #==> #get_copy doit aussi copier from_initrot!
+
+#De temps a autres marchand de pieces passe et on peut acheter
+
+#music / sons (des autres aussi, fonction de distance)
+
 #quand change de categorie:
 #   -background change ==> etoiles au dernier niveau
 #   -bruit de foule (pendant les feux) change
 
-#De temps a autres marchand de pieces passe et on peut acheter
-
 #alert/ecran WIN (avec une coupe en 3D)
+
 #statistics
-
-#wings au hasard - vaisseau au hasard (facile!) - au moment du choix, demander regenerer vaisseau
-#derive
-
 4.
 
 #sons
 
 #qqch qui montre que on accelere (mouvement cam!)
 
-#get_copy doit aussi copier from_initrot!!
+
 
 
 def create_vessel(color):
@@ -47,19 +50,20 @@ def create_vessel(color):
     glass = Material((0,0,0),M=(120,120,120))
     rest = Material(color)
     t,n,c = garage.generate_vessel(rest, glass)
-    w = garage.wings_free(1.3,1.5,0.2,-0.5,1.,rest,5.,y=0.)
+##    w = garage.wings_free(1.3,1.5,0.2,-0.5,1.,rest,5.,y=0.)
+    w = garage.random_wing(rest)
 ##    v = vessel.Vessel(None,more_triangles=w[0].triangles+w[1].triangles+\
 ##                                            t.triangles+n.triangles+c.triangles)
     v = vessel.Vessel(None,more_triangles=[])
     #quality = power*friction
-    #quality = turn*max_fuel
+    #quality = turn+max_fuel
 ##    friction = 0.7 + random.random()*(1.3-0.7)
     power = parameters.MIN_POWER + random.random()*(parameters.MAX_POWER-parameters.MIN_POWER)
-    friction = quality/power
+    friction = random.random()
     power *= parameters.ENGINE_POWER
     mass = parameters.MIN_MASS + random.random()*(parameters.MAX_MASS-parameters.MIN_MASS)
     turn = parameters.MIN_TURN + random.random()*(parameters.MAX_TURN-parameters.MIN_TURN)
-    max_fuel = quality/turn
+    max_fuel = quality - turn
     max_fuel = parameters.MIN_FUEL + int(max_fuel*(parameters.MAX_FUEL-parameters.MIN_FUEL))
     #
     v.tail = vessel.Part(t.triangles, turn, friction, mass)
@@ -70,6 +74,7 @@ def create_vessel(color):
     v.engine= vessel.Engine(max_fuel, power)
     v.engine.mass = mass
     v.engine.turn = turn
+    v.engine.friction = friction
     #
     v.refresh_mesh()
     v.rotate_around_center_y(-90)
@@ -80,18 +85,19 @@ def create_vessel(color):
     #
     return v
 
-def init_game():
+def init_game(hero):
     parameters.players = [gamelogic.Player() for i in range(parameters.NPLAYERS-1)]
     hero_color = parameters.HERO_COLOR
     hero_player = gamelogic.Player(parameters.HERO_NAME,Material(hero_color))
     hero_player.points = 0
     parameters.player = hero_player
     parameters.players += [hero_player]
-    hero = create_vessel(hero_color)
-    hero.is_hero = True
-    hero.mass /= 2.
-    hero.compute_dynamics()
-    hero.name = "Hero" #!!
+    if hero is None:
+        hero = create_vessel(hero_color)
+        hero.is_hero = True
+        hero.mass /= 2.
+        hero.compute_dynamics()
+        hero.name = "Hero" #!!
     hero.attach_to_player(hero_player,reset_color=False)
 
 def init_scene():
@@ -238,17 +244,18 @@ if __name__ == "__main__":
             parameters.HERO_COLOR = color.get_value()
             print("setting", parameters.HERO_COLOR)
             #
-            gamelogic.ShowRanking("Choose a vessel", "Continue", [], False, True)
+            vc = gamelogic.ShowRanking("Choose a vessel", "Continue", [], False, True)
             thorpy.set_theme("classic")
             scenario.launch_intro_text()
             scenario.launch_intro_text2()
             scenario.launch_help()
         thorpy.set_theme(parameters.THEME)
-        init_game()
+        init_game(vc.vessels[0])
         parameters.AA = vs.get_value("aa")
         parameters.VISIBILITY = vs.get_value("visibility")
 
         while True:
+            parameters.flush()
             while True:
                 scene, goback = init_scene()
                 if not goback:

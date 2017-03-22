@@ -16,26 +16,28 @@ def get_vessel_element(v):
     red = (255,50,50)
     green = (50,255,50)
     f = round(v.engine.force * 10000 * 1.5)
-    c = round(v.engine.max_fuel)
+    c = round(v.engine.max_fuel/100.)
     t = round(v.turn * 100)
     d = round(v.friction * 100,2)
     m = round(v.mass * 4000)
-    e_engine = thorpy.SkillBar.make("Power: "+str(f)+" kW",MIN_POWER,MAX_POWER,green)
+    e_engine = thorpy.SkillBar.make("Power: "+str(f)+" kW",MIN_POWER,MAX_POWER,
+                                    green, size=(150,30))
     e_engine.set_life(v.engine.force)
 ##    e_engine = thorpy.make_text("Power: "+str(f)+" kW")
     e_turn = thorpy.SkillBar.make("Agility: "+str(t), parameters.MIN_TURN,
-                                    parameters.MAX_TURN, green)
+                                    parameters.MAX_TURN, green, size=(150,30))
     e_turn.set_life(v.turn/parameters.TURN/5.) #!!
 ##    e_turn = thorpy.make_text("Agility: "+str(t))
-    e_consumption = thorpy.LifeBar.make("Consumption: "+str(c)+" kW/L", red)
-    e_consumption.set_life(min(1., c/20.))
+    e_consumption = thorpy.SkillBar.make("Max fuel: "+str(c)+" L",
+                            parameters.MIN_FUEL, parameters.MAX_FUEL, green,
+                            size=(150,30))
+    e_consumption.set_life(v.engine.max_fuel)
 ##    e_consumption = thorpy.make_text("Consumption: "+str(c)+" kW/L")
-    e_friction = thorpy.LifeBar.make("Friction: "+str(d), red)
-    e_friction.set_life(min(1., d/2.))
+    e_friction = thorpy.SkillBar.make("Friction: "+str(d), 0., 1., red, size=(150,30))
+    e_friction.set_life(v.friction/parameters.FRICTION/5.)
 ##    e_friction = thorpy.make_text("Friction: "+str(d))
     e_mass = thorpy.SkillBar.make("Mass: "+str(m)+" kg", parameters.MIN_MASS,
-                                        parameters.MAX_MASS, red)
-    print("mmm",v.mass,v.mass/parameters.MASS/5.)
+                                        parameters.MAX_MASS, red, size=(150,30))
     e_mass.set_life(v.mass/parameters.MASS/5.)
 ##    e_mass = thorpy.make_text("Mass: "+str(m)+" kg")
     box = thorpy.Box.make([e_engine,e_turn,e_consumption,e_friction,e_mass])
@@ -124,10 +126,14 @@ def wings_rect(a,b,color,x=0.,y=0.,angle=0.):
 
 def wings_free(a,b,c,d,fleche,color,angle=0.,y=0,sym=True):
     assert d < 0
+    assert a > 0
     p1 = V3()
     p2 = p1 + V3(0,0,a)
     p3 = p2 + V3(b,0,-fleche)
     p4 = p3 + V3(c,0,d)
+##    if p4.z > p2.z:
+##        print("correction")
+##        p4.z = p2.z-0.2
 ##    mesh = core3d.Area3D([p1,p2,p3,p4],color)
     if sym:
         t1 = core3d.Triangle(p1,p2,p3)
@@ -151,6 +157,19 @@ def wings_free(a,b,c,d,fleche,color,angle=0.,y=0,sym=True):
         return mesh, wings_free(a,-b,-c,d,fleche,color,-angle,y,False)
     else:
         return mesh
+
+def rand(a,b):
+    return a + random.random()*(b-a)
+
+def random_wing(color):
+    a = rand(0.5,2.) #semi corde
+    b = 1.8 #envergure
+    c = rand(-0.3,0.3) #pointe
+    d = rand(-0.5,-0.3) #autre semi corde
+    fleche = rand(0.,2.)
+    angle = rand(-8.,8.)
+    y = 0.2
+    return wings_free(a,b,c,d,fleche,color,angle,y)
 
 ##import vessel
 # def build_all_parts():
@@ -271,8 +290,13 @@ class Garage:
         self.e_damage = thorpy.make_text("Vessel damages: " + damages + "%")
         self.e_ranking = thorpy.make_button("See rankings", launch_rankings, {"garage":self})
 ##        self.e_ranking = get_rankings_box()
+        def quit_forever():
+            if thorpy.launch_binary_choice("Are you sure ?"):
+                thorpy.functions.quit_func()
+            else:
+                self.e_bckgr.unblit_and_reblit()
         self.e_menu = thorpy.make_button("Stop career and die (forever)",
-                                        func=quit_game)
+                                        func=quit_forever)
         self.e_menu.set_main_color((255,0,0))
         self.e_menu.set_font_size(thorpy.style.FONT_SIZE-2)
         self.e_menu.scale_to_title()
