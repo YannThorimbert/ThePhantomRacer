@@ -45,6 +45,51 @@ def get_vessel_element(v):
     box.fit_children()
     return box
 
+def get_random_element():
+    parts = {"tail":["agility","friction","mass"],
+             "nose":["agility","friction","mass"],
+             "cockpit":["agility","friction","mass"],
+             "wings":["agility","friction","mass"],
+             "engine":["power","max_fuel"]}
+    bfactor = {"agility":1.,"friction":-1.,"mass":-1.,"power":1.,"max_fuel":1.}
+    print("Choices", list(parts.keys()))
+    part = random.choice(list(parts.keys()))
+##    part_arg = part[0].lower() + part[1:]
+##    part_arg = getattr(parameters.player.vessel, part_arg)
+    MAX_BONUS = 0.3
+    bonus = [-MAX_BONUS + random.random()*2.*MAX_BONUS for skill in parts[part]]
+    for i,skill in enumerate(parts[part]):
+        bonus[i] *= bfactor[skill]
+    text = ""
+    skills = [part]
+    price = sum(bonus)
+    for i,b in enumerate(bonus):
+        increase = "Lower "
+        skill = parts[part][i]
+        skills.append((skill,b))
+        if b > 0:
+            increase = "Increase "
+        else:
+            b *= -1.
+        text += increase + "your overall " + skill.replace("_"," ") + " by " + \
+                str(round(b*100)) + " %.\n\n"
+    ok_text = "buy"
+    cost = "cost: "
+    if price < 0:
+        text += "You can earn money by exchanging your current " + part + " against this less performant one."
+        ok_text = "exchange"
+        cost = "gain: "
+    text = thorpy.pack_text(300,text)
+    price_int = int(price*parameters.PRICE)
+    price = " ("+cost+str(abs(price_int)) + " $)"
+    box = thorpy.make_textbox("New "+part+":",text,ok_text=ok_text+price)
+    print("hu0",box)
+    if "gain" in cost:
+        box.e_ok.set_main_color((0,255,0))
+    else:
+        box.e_ok.set_main_color((255,0,0))
+    return box, skills, price_int
+
 
 def color_glasses(model, glass_color):
     tail, nose, cock = [], [], []
@@ -86,11 +131,88 @@ def cut_object(filename, color, glass_color):
            t.color = glass_color
    return [tail, nose, cock]
 
+def buy_part(parent):
+    background = thorpy.load_image("background_garage.jpg")
+    background = thorpy.get_resized_image(background,
+                                                    (parameters.W,parameters.H),
+                                                    type_=max)
+    thorpy.get_screen().blit(background,(0,0))
+    pygame.display.flip()
+    title = thorpy.make_text("Vessel merchant", thorpy.style.TITLE_FONT_SIZE+4, (255,0,0))
+    hbar = thorpy.Line.make(200, "h")
+    intro = "Hello, "+str(parameters.player.name)+"."+\
+                                    "\nHere is what I have to sell today:"
+    intro = thorpy.make_text(intro, thorpy.style.TITLE_FONT_SIZE, thorpy.style.TITLE_FONT_COLOR)
+    #
+    money = thorpy.Element(thorpy.pack_text(200,"Your money: "+str(parameters.player.money)+" $."))
+    money.set_painter(thorpy.functions.obtain_valid_painter(thorpy.painterstyle.DEF_PAINTER,
+                                                 pressed=True))
+    money.finish()
+    money.scale_to_title()
+    #
+    info = thorpy.Element(thorpy.pack_text(200,"Remember that any part you buy will replace your current one."))
+    info.set_painter(thorpy.functions.obtain_valid_painter(thorpy.painterstyle.DEF_PAINTER,
+                                                 pressed=True))
+    info.finish()
+    info.scale_to_title()
+    money_info = thorpy.Ghost.make([info, money])
+    thorpy.store(money_info, mode="h")
+    money_info.fit_children()
+    #
+    part1, skills1, price1 = get_random_element()
+    part2, skills2, price2 = get_random_element()
+    choices = thorpy.Ghost.make(elements=[part1,part2])
+    thorpy.store(choices, mode="h")
+    choices.fit_children()
+    cancel = thorpy.make_button("No, thanks", thorpy.functions.quit_menu_func)
+    #
+    def buy(part, cost):
+        if cost > parameters.player.money:
+            thorpy.launch_blocking_alert("Not enough money",
+            "You don't have enough money to buy this part.",transp=False)
+            box.unblit_and_reblit()
+        else:
+            parameters.player.money -= cost
+            name = part.pop(0)
+            if name == "wings":
+                parts = [getattr(parameters.player.vessel, "lwing"),
+                         getattr(parameters.player.vessel, "rwing")]
+            else:
+                parts = [getattr(parameters.player.vessel, name)]
+            for part_obj in parts:
+                for skillname, factor in part:
+                    if skillname == "agility": skillname = "turn"
+                    elif skillname == "power":
+                        parameters.player.vessel.engine_force *= (1.+factor)
+                    elif skillname == "max_fuel":
+                        parameters.player.vessel.engine.max_fuel *= (1.+factor)
+                    elif skillname == "mass":
+                        parameters.player.vessel.engine_force *= parameters.player.vessel.mass
+                        parameters.player.vessel.mass *= (1.+factor)
+                        parameters.player.vessel.engine_force /= parameters.player.vessel.mass
+                        parameters.player.vessel.max_life = int(parameters.player.vessel.mass * parameters.LIFE_FACTOR)
+                    else:
+                        current_value = getattr(parameters.player.vessel, skillname)
+                        new_value = current_value + factor*current_value/6.
+                        setattr(parameters.player.vessel, skillname, new_value)
+            thorpy.functions.quit_menu_func()
+    part1.e_ok.user_func = buy
+    part1.e_ok.user_params = {"part":skills1, "cost":price1}
+    part2.e_ok.user_func = buy
+    part2.e_ok.user_params = {"part":skills2, "cost":price2}
+    #
+    box = thorpy.Box.make([title,hbar,intro,money_info,choices,cancel])
+    box.center()
+    thorpy.launch_blocking(box)
+##    thorpy.launch_blocking_choices(text, choices, parent,
+##                    thorpy.style.TITLE_FONT_SIZE+2, thorpy.style.TITLE_FONT_COLOR)
+
 
 def generate_vessel(color, glass_color):
     t = random.choice(parameters.MODELS)+".stl"
     n = random.choice(parameters.MODELS)+".stl"
     c = random.choice(parameters.MODELS)+".stl"
+    print(t,n,c)
     #
     to =  cut_object(t,color,glass_color)[0]
     no =  cut_object(n,color,glass_color)[1]

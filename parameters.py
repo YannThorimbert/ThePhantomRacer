@@ -3,7 +3,7 @@ from pygame.math import Vector3 as V3
 W,H = 900,600
 FPS = 40
 
-THEME = "classic"
+THEME = "human"
 
 AA = True
 
@@ -14,10 +14,15 @@ HERO_COLOR = (0,0,255)
 HERO_MODEL = None
 HERO_NAME = "Hero"
 
+PRICE = 5000.
+
 MOVE_DELTA_I = 5
 VISIBILITY = 800
 SPEED = 0#to be deleted
-HERO_POS = V3(0,-4,15)
+
+##HERO_POS = V3(0,-4,15)
+HERO_POS = V3(0,-4,10)
+ORIGINAL_HERO_POS = V3(HERO_POS)
 
 MIN_BOX_THICKNESS = 10
 
@@ -29,6 +34,10 @@ FRICTION = 1. / 500.
 MASS = 1. / 10.
 
 CURRENT_QUALITY = 1.
+
+BACKGROUNDS = {1.:"background1.jpg",
+                1.5:"PaulinaRiva.png",
+                2.:"ChristinArredondo.png"}
 
 OVERTAKE_SLOWER = 0.75
 LIFE_FACTOR = 10
@@ -62,10 +71,12 @@ MIN_POWER = 0.8
 MAX_POWER = 1.2
 MIN_MASS = 0.6
 MAX_MASS = 1.4
-MIN_TURN = 0.2
+MIN_TURN = 0.6
 MAX_TURN = 1.2
 MIN_FUEL = 1800
 MAX_FUEL = 2400
+
+MERCHANT_PROBABILITY = 0.6
 
 QUIT_GAME = False
 

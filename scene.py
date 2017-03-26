@@ -21,7 +21,7 @@ class Scene:
         self.screen_rect = self.screen.get_rect().move((0,parameters.H//2))
         self.i = 0 #frame
         self.vessels = []
-        self.background = thorpy.load_image("background1.jpg")
+        self.background = thorpy.load_image(parameters.BACKGROUNDS[parameters.CURRENT_QUALITY])
         self.background = thorpy.get_resized_image(self.background,
                                                 (parameters.W,parameters.H//2),
                                                 type_=max)
@@ -105,7 +105,7 @@ class Scene:
 
 
     def func_time(self):
-        self.start_i = -1
+##        self.start_i = -1
         self.i += 1
         if self.start_i < 0:
 ##            if self.i%10 == 0:
@@ -117,8 +117,11 @@ class Scene:
             self.treat_commands()
             # dynamics
             self.refresh_opponents()
+            prev = self.hero.dyn.velocity.z
             self.hero.dyn.refresh()
+            a = prev - self.hero.dyn.velocity.z
             self.move_hero(self.hero.dyn.velocity)
+            parameters.HERO_POS.z = parameters.ORIGINAL_HERO_POS.z + a*70.
             self.hero.refresh_angle_h()
             self.hero.refresh_angle_v()
             # collisions

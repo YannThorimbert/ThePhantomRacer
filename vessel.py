@@ -162,6 +162,9 @@ class Vessel(core3d.Object3D):
         self.dyn.reset()
         self.rotate_around_center_x(-self.angle_x) #new!
         self.rotate_around_center_z(-self.angle_z)
+##        self.rotate_around_center_z(-self.from_init_rot[2])
+##        self.rotate_around_center_y(-self.from_init_rot[1])
+##        self.rotate_around_center_x(-self.from_init_rot[0])
         self.angle_x = 0.
         self.angle_z = 0.
         self.to_move_x = 0
@@ -295,6 +298,7 @@ class Vessel(core3d.Object3D):
         self.engine_force = self.engine.force/self.mass
         self.life = int(self.mass * parameters.LIFE_FACTOR)
         self.max_life = self.life
+
 
     def boost(self):
         if self.engine.fuel > 0:

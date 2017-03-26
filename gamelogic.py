@@ -143,6 +143,8 @@ class ShowRanking:
         self.viewport_rect.centery = parameters.H//2
         self.cam = camera.Camera(self.viewport, fov=512, d=2, objs=[])
         self.screen = thorpy.get_screen()
+        self.displayed_vessel = None
+        self.i = 0
         #
         if results:
             ranking[0].points += 1
@@ -152,12 +154,14 @@ class ShowRanking:
             ranking[1].money += 200
             if ranking[2].points < 0: ranking[2].points = 0
         #
+        self.trophy = None
         if choosevessel:
             self.e_players = []
             def other_vessel():
                 self.vessels[0] = create_vessel(parameters.HERO_COLOR)
                 self.vessels[0].set_pos(V3(0,-1*4.5,20))
                 self.vessels[0].move(V3(0,4,0))
+                self.displayed_vessel = self.vessels[0]
                 #replace self.ve
                 new_ve = get_vessel_element(self.vessels[0])
                 self.e_bckgr.replace_element(self.ve, new_ve)
@@ -170,6 +174,7 @@ class ShowRanking:
             self.e_players.append(c)
             from main import create_vessel
             self.vessels = [create_vessel(parameters.HERO_COLOR)]
+            self.displayed_vessel = self.vessels[0].get_copy()
             self.ve = get_vessel_element(self.vessels[0])
             self.e_players.append(self.ve)
         else:
@@ -178,6 +183,16 @@ class ShowRanking:
             else:
                 self.e_players = [p.get_element() for i,p in enumerate(ranking)]
             self.vessels = [p.vessel.get_copy() for p in ranking]
+            if results:
+                import core3d
+                from light import Material
+                self.trophy = core3d.Object3D("trophy1.stl")
+                self.trophy.set_color(Material((255,215,0)))
+##                    self.trophy.set_color((255,255,0))
+                self.trophy.set_pos(V3(5.,-0*4.5-0.2,15))
+                self.trophy.rotate_around_center_z(90.)
+                self.trophy.rotate_around_center_x(-65.)
+                self.trophy.move(V3(0,4,0))
         self.background = thorpy.load_image("background1.jpg")
         self.background = thorpy.get_resized_image(self.background,
                                                 (parameters.W,parameters.H//2),
@@ -206,6 +221,9 @@ class ShowRanking:
         else:
             self.vessels[0].set_pos(V3(0,-1*4.5,20))
             self.vessels[0].move(V3(0,4,0))
+            #
+            self.displayed_vessel.set_pos(V3(0,-1*4.5,20))
+            self.displayed_vessel.move(V3(0,4,0))
         #
         thorpy.store(self.e_bckgr,gap=40)
         for e in self.e_players:
@@ -219,6 +237,8 @@ class ShowRanking:
             self.e_bckgr.add_elements([self.e_viewport_frame,self.e_title])
         self.goback = False
         def return_garage():
+            for e in self.vessels:
+                e.rotate_around_center_y(-self.i)
             self.goback=True
             thorpy.functions.quit_menu_func()
         if not results and not choosevessel:
@@ -235,11 +255,19 @@ class ShowRanking:
 
     def refresh_display(self):
         self.viewport.fill(self.viewport_color)
-        for v in self.vessels:
-            v.rotate_around_center_y(1)
-            v.refresh_and_draw(self.cam,self.light)
+        if self.displayed_vessel:
+            self.displayed_vessel.rotate_around_center_y(1)
+            self.displayed_vessel.refresh_and_draw(self.cam,self.light)
+        else:
+            for v in self.vessels:
+                v.rotate_around_center_y(1)
+                v.refresh_and_draw(self.cam,self.light)
+            if self.trophy:
+                self.trophy.rotate_around_center_y(1)
+                self.trophy.refresh_and_draw(self.cam, self.light)
         self.screen.blit(self.viewport,self.viewport_rect)
         pygame.display.update(self.viewport_rect)
+        self.i += 1
 
     def mousemotion(self,e):
         if self.viewport_rect.collidepoint(pygame.mouse.get_pos()):
@@ -256,8 +284,9 @@ class ShowRanking:
                 rotate_z = a * k * e.rel[1]
                 rotate_x = (1.-a) * k * e.rel[1]
                 rotate_y = k * e.rel[0]
-                self.vessels[0].rotate_around_center_x(rotate_x)
-                self.vessels[0].rotate_around_center_y(rotate_y)
-                self.vessels[0].rotate_around_center_z(rotate_z)
+                if self.displayed_vessel:
+                    self.displayed_vessel.rotate_around_center_x(rotate_x)
+                    self.displayed_vessel.rotate_around_center_y(rotate_y)
+                    self.displayed_vessel.rotate_around_center_z(rotate_z)
         else:
             thorpy.change_cursor(thorpy.constants.CURSOR_NORMAL)

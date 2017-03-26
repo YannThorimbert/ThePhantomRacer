@@ -19,30 +19,12 @@ import obstacle
 import scenario
 from core3d import ManualObject3D
 
-#remettre feux, speech, human ...
-
 ################################################################################
-#flush garage/gamelogic angle...
-    #==> #get_copy doit aussi copier from_initrot!
-
-#De temps a autres marchand de pieces passe et on peut acheter
 
 #music / sons (des autres aussi, fonction de distance)
-
 #quand change de categorie:
-#   -background change ==> etoiles au dernier niveau
 #   -bruit de foule (pendant les feux) change
-
-#alert/ecran WIN (avec une coupe en 3D)
-
 #statistics
-4.
-
-#sons
-
-#qqch qui montre que on accelere (mouvement cam!)
-
-
 
 
 def create_vessel(color):
@@ -50,14 +32,10 @@ def create_vessel(color):
     glass = Material((0,0,0),M=(120,120,120))
     rest = Material(color)
     t,n,c = garage.generate_vessel(rest, glass)
-##    w = garage.wings_free(1.3,1.5,0.2,-0.5,1.,rest,5.,y=0.)
     w = garage.random_wing(rest)
-##    v = vessel.Vessel(None,more_triangles=w[0].triangles+w[1].triangles+\
-##                                            t.triangles+n.triangles+c.triangles)
     v = vessel.Vessel(None,more_triangles=[])
     #quality = power*friction
     #quality = turn+max_fuel
-##    friction = 0.7 + random.random()*(1.3-0.7)
     power = parameters.MIN_POWER + random.random()*(parameters.MAX_POWER-parameters.MIN_POWER)
     friction = random.random()
     power *= parameters.ENGINE_POWER
@@ -225,7 +203,8 @@ if __name__ == "__main__":
 
     DEBUG = False
     def play():
-        if not DEBUG:
+##        if not DEBUG:
+        if True:
             name = thorpy.Inserter.make("Choose your name",value="Hero")
             box = thorpy.make_ok_box([name])
             thorpy.auto_ok(box)
@@ -246,9 +225,10 @@ if __name__ == "__main__":
             #
             vc = gamelogic.ShowRanking("Choose a vessel", "Continue", [], False, True)
             thorpy.set_theme("classic")
-            scenario.launch_intro_text()
-            scenario.launch_intro_text2()
-            scenario.launch_help()
+            if not DEBUG:
+                scenario.launch_intro_text()
+                scenario.launch_intro_text2()
+                scenario.launch_help()
         thorpy.set_theme(parameters.THEME)
         init_game(vc.vessels[0])
         parameters.AA = vs.get_value("aa")
@@ -294,6 +274,8 @@ if __name__ == "__main__":
             if parameters.player.vessel.life <=0:
                 parameters.player.vessel.life = 1
                 parameters.player.vessel.visible = True
+            if random.random() < parameters.MERCHANT_PROBABILITY:
+                garage.buy_part(None)
 
 
     e_title = thorpy.make_text("The Phantom Racer", 25, (255,0,0))

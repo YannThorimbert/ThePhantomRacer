@@ -637,6 +637,7 @@ class Object3D(Path3D):
         triangles = [t.copy() for t in self.triangles]
         cop = ManualObject3D(triangles)
         cop.from_init = V3(self.from_init)
+        cop.from_init_rot = V3(self.from_init_rot)
         if refresh_normals:
             cop.refresh_normals()
         return cop
