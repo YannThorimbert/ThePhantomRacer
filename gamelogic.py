@@ -237,8 +237,7 @@ class ShowRanking:
             self.e_bckgr.add_elements([self.e_viewport_frame,self.e_title])
         self.goback = False
         def return_garage():
-            for e in self.vessels:
-                e.rotate_around_center_y(-self.i)
+            self.derotate()
             self.goback=True
             thorpy.functions.quit_menu_func()
         if not results and not choosevessel:
@@ -252,6 +251,13 @@ class ShowRanking:
         m = thorpy.Menu(self.e_bckgr)
         m.play()
 
+    def derotate(self):
+        pass
+##        for e in self.vessels:
+##                e.rotate_around_center_y(-self.i)
+##        if self.displayed_vessel:
+##            self.displayed_vessel.rotate_around_center_y(-self.i)
+##        self.i = 0
 
     def refresh_display(self):
         self.viewport.fill(self.viewport_color)

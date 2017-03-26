@@ -36,8 +36,9 @@ def create_vessel(color):
     v = vessel.Vessel(None,more_triangles=[])
     #quality = power*friction
     #quality = turn+max_fuel
-    power = parameters.MIN_POWER + random.random()*(parameters.MAX_POWER-parameters.MIN_POWER)
-    friction = random.random()
+    power_rand = random.random()+0.000001
+    power = parameters.MIN_POWER + power_rand*(parameters.MAX_POWER-parameters.MIN_POWER)
+    friction = power_rand
     power *= parameters.ENGINE_POWER
     mass = parameters.MIN_MASS + random.random()*(parameters.MAX_MASS-parameters.MIN_MASS)
     turn = parameters.MIN_TURN + random.random()*(parameters.MAX_TURN-parameters.MIN_TURN)
@@ -83,6 +84,7 @@ def init_scene():
     #
     gara = garage.Garage()
     gara.play()
+    gara.derotate()
     #
     parameters.scene = Scene()
     scene = parameters.scene
@@ -224,6 +226,7 @@ if __name__ == "__main__":
             print("setting", parameters.HERO_COLOR)
             #
             vc = gamelogic.ShowRanking("Choose a vessel", "Continue", [], False, True)
+            vc.derotate()
             thorpy.set_theme("classic")
             if not DEBUG:
                 scenario.launch_intro_text()
@@ -250,9 +253,10 @@ if __name__ == "__main__":
             m.play()
             gamelogic.refresh_ranking()
             cat_before,c1 = gamelogic.get_category(parameters.player.ranking-1)
-            gamelogic.ShowRanking("Ranking", "Go to garage",
+            sr = gamelogic.ShowRanking("Ranking", "Go to garage",
                                     scene.get_current_ranking_players(),results=True)
             gamelogic.refresh_ranking()
+            sr.derotate()
             cat_after,c2 = gamelogic.get_category(parameters.player.ranking-1)
             if c2 > c1:
                 thorpy.launch_blocking_alert("Your category is now "+cat_after+\

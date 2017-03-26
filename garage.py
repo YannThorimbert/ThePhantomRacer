@@ -439,7 +439,7 @@ class Garage:
         def refresh_refuel():
             life = self.ovessel.engine.fuel / self.ovessel.engine.max_fuel
             self.e_fuel.set_life(life)
-            self.e_fuel.set_life_text("Fuel: "+str(round(life*100))+" %")
+            self.e_fuel.set_text("Fuel: "+str(round(life*100))+" %")
             self.e_money.set_text("Money: "+str(parameters.player.money)+" $")
         def choice_refuel():
             cost = (self.ovessel.engine.max_fuel - self.ovessel.engine.fuel)//2
@@ -482,6 +482,14 @@ class Garage:
                                     self.e_skills])
         self.e_menu.move((0,30))
         self.e_skills.stick_to(self.e_viewport_frame, "left", "right")
+        self.i = 0
+
+
+
+    def derotate(self):
+        pass
+##        self.vessel.rotate_around_center_y(-self.i)
+##        self.i = 0
 
     def refresh_display(self):
         self.vessel.rotate_around_center_y(1)
