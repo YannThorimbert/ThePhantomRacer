@@ -584,13 +584,13 @@ class Object3D(Path3D):
 
     def scale_y(self, factor, refresh_normals=False):
         for v in self.vertices.values():
-            v.y *= factor
+            v.x *= factor
         if refresh_normals:
             self.refresh_normals()
 
     def scale_z(self, factor, refresh_normals=False):
         for v in self.vertices.values():
-            v.z *= factor
+            v.x *= factor
         if refresh_normals:
             self.refresh_normals()
 

@@ -180,7 +180,6 @@ def init_scene():
         o.attach_to_player(player)
         scene.players.append(player)
         o.set_ia(100, 0.01)
-    hero.reinit_orientation()
     hero.set_pos(parameters.HERO_POS)
     scene.put_hero_on_rail(0,0)
     print("end main")
